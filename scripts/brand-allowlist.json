@@ -1,0 +1,1353 @@
+[
+  {
+    "path": "apps/mobile/modules/**/*.podspec",
+    "pattern": "hello@t\u0033tools\\.com",
+    "reason": "upstream author contact kept as attribution",
+    "ticket": "RB16"
+  },
+  {
+    "path": "patches/dbus-next@0.10.2.patch",
+    "pattern": "T\u0033 Code",
+    "reason": "The third-party patch comment is included in the pnpm-lock.yaml patchedDependencies content hash; changing it breaks frozen-lockfile installs.",
+    "ticket": "RN11"
+  },
+  {
+    "path": "apps/mobile/src/connection/storage.test.ts",
+    "pattern": "t\u0033code\\.connections",
+    "reason": "This legacy-key fixture proves the fresh mobile catalog ignores old data and leaves the old key untouched.",
+    "ticket": "RN08"
+  },
+  {
+    "path": "infra/relay/**",
+    "pattern": "T\u0033 (?:Code|Connect|Environment)|T\u0033Code|t\u0033code|com\\.t\u0033tools\\.(?:t\u0033code|test)|t\u0033-(?:code|mobile|web|relay|env|cloud|link)[A-Za-z0-9_:+.-]*",
+    "reason": "The deployed relay names, persisted environment label, deployment resources and protocol fixtures stay together until the RB13 relay cutover; scoped package imports are excluded.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packaging/aur/**",
+    "reason": "Existing upstream release and distribution channels remain in use until RB14 publishes the fork.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "scripts/notify-discord-release*",
+    "reason": "Existing upstream release and distribution channels remain in use until RB14 publishes the fork.",
+    "ticket": "RB14"
+  },
+  {
+    "path": ".github/workflows/publish-aur.yml",
+    "reason": "Existing upstream release and distribution channels remain in use until RB14 publishes the fork.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "README.md",
+    "pattern": "^ChatAndCode is a fork of T\u0033 Code by T\u0033 Tools Inc\\., used under the MIT license \\(see LICENSE\\)\\.$",
+    "reason": "Historical attribution to the upstream project and copyright holder, not a claim of current ownership.",
+    "ticket": "RN14"
+  },
+  {
+    "path": "apps/mobile/modules/**",
+    "pattern": "com\\.t\u0033tools\\.(?:agentnotifications|composereditor|markdowntext|nativecontrols|reviewdiff|review-diff(?:\\.[a-z-]+)*|terminal)\\b|\\bT\u0033(?:AgentNotifications|ComposerEditor|MarkdownText|NativeControls|KeyboardCommands|ReviewDiff|Terminal)[A-Za-z0-9_]*\\b|\\b(?:t\u0033-(?:agent-notifications|composer-editor|markdown-text|native-controls|review-diff|terminal)|t\u0033-link:)",
+    "reason": "Native module, codegen spec, Android group, queue and inline-link bridge names require a coordinated native rebuild; scoped packages remain visible to RN16.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "apps/desktop/src/snapShot/LinuxSnapShot.dbus.test.ts",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "apps/desktop/src/snapShot/linuxCaptureSession.ts",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "docs/internals/linux-snap-shot.md",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "native/kde-snap-shot/src/feedback.qml",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "native/kde-snap-shot/src/feedback.rs",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "native/kde-snap-shot/src/main.rs",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "native/kde-snap-shot/src/transport_tests.rs",
+    "pattern": "com[./]t\u0033tools[./](?:KdeCapture|SnapShot)(?:[./][A-Za-z]+)*",
+    "reason": "D-Bus interfaces and object paths are shared by the native capture helpers and their callers; RB16 must change both sides together.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "apps/mobile/modules/t\u0033-terminal/{README.md,THIRD_PARTY_NOTICES.md}",
+    "pattern": "t\u0033code/custom-io-ordered-feed",
+    "reason": "This is the source branch of the third-party Ghostty fork recorded by the vendoring notices; changing its spelling invents a nonexistent branch."
+  },
+  {
+    "path": "packages/client-runtime/src/work-log/presentation.ts",
+    "pattern": "t\u0033-code\\|t\u0033_code\\|t\u0033code",
+    "reason": "The MCP-server regex must recognize all three historical tool-name spellings in saved transcripts."
+  },
+  {
+    "path": "packages/client-runtime/src/work-log/presentation.test.ts",
+    "pattern": "mcp__t\u0033code__preview_click|t\u0033code/link_pull_request",
+    "reason": "Historical tool-name spelling fixtures: the presentation parser must keep recognizing saved transcripts that use the legacy spellings (see the presentation.ts entry).",
+    "ticket": "RN11"
+  },
+  {
+    "path": ".github/workflows/mobile-showcase-screenshots.yml",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/generated-uniwind-theme-names.json",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/generated-uniwind-themes.css",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/scripts/generate-uniwind-themes.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/src/lib/mobileTheme.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/src/lib/mobileThemeRuntime.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/src/lib/storage.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/mobile/uniwind-types.d.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/index.html",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/components/chat/ComposerBanner.tsx",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/components/chat/ComposerSurface.tsx",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/components/clerk/clerkAppearance.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/components/settings/ThemeSettings.tsx",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/components/settings/themeEditorStore.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/hooks/useTheme.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/index.css",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/themeBoot.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/themePalette.test.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "apps/web/src/themePalette.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "docs/operations/mobile-app-store-screenshots.md",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "packages/shared/src/themePalettes.ts",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*",
+    "reason": "Persisted theme IDs and the T\u0033 Chat theme symbols name an existing palette or another product; font utility tokens are retained."
+  },
+  {
+    "path": "packages/shared/src/themePalettes.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/src/features/review/nativeReviewDiffAdapter.test.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/src/features/terminal/terminalTheme*",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/src/lib/materialYouTheme.test.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/src/lib/mobileThemeRuntime.test.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/src/lib/mobileThemeVariables.test.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/server/src/cli/theme.test.ts",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "scripts/mobile-showcase*",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": ".github/workflows/mobile-showcase-screenshots.yml",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "docs/operations/mobile-app-store-screenshots.md",
+    "pattern": "t\u0033-(?:code|grove|ocean|ember|iris)(?![A-Za-z0-9_-])",
+    "reason": "This is a persisted palette ID or the screenshot directory named for that palette, not the application slug."
+  },
+  {
+    "path": "apps/mobile/global.css",
+    "pattern": "font-t\u0033-[a-z-]+",
+    "reason": "Internal font utility tokens retain their current names; they are not product branding."
+  },
+  {
+    "path": "apps/mobile/src/**",
+    "pattern": "font-t\u0033-[a-z-]+",
+    "reason": "Internal font utility tokens retain their current names; they are not product branding."
+  },
+  {
+    "path": ".gitignore",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "AGENTS.md",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": ".agents/skills/test-t\u0033-app/SKILL.md",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": ".agents/skills/test-t\u0033-mobile/SKILL.md",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "docs/operations/development.md",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "apps/server/scripts/t\u0033-sqlite-state*",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "apps/server/scripts/migrate-dev-db*",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "apps/server/src/project/AgentSessionScanner*",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": ".devcontainer/devcontainer.json",
+    "pattern": "(?<![A-Za-z0-9])\\.(?:myt\u0033code|t\u0033code|t\u0033)\\b",
+    "reason": "These literals name actual legacy state folders excluded from Git, scanning or destructive operations, or used as migration sources; changing them would remove that protection."
+  },
+  {
+    "path": "apps/mobile/metro.config.js",
+    "pattern": "myt\u0033code",
+    "reason": "Metro excludes the actual legacy state folder; this alternative is part of its existing directory-matching regex."
+  },
+  {
+    "path": ".agents/skills/test-t\u0033-app/SKILL.md",
+    "pattern": "test-t\u0033-mobile",
+    "reason": "This references the existing upstream-owned skill folder; RN14 does not rename that folder."
+  },
+  {
+    "path": ".agents/skills/test-t\u0033-mobile/SKILL.md",
+    "pattern": "test-t\u0033-mobile",
+    "reason": "This references the existing upstream-owned skill folder; RN14 does not rename that folder."
+  },
+  {
+    "path": ".agents/skills/test-t\u0033-mobile/agents/openai.yaml",
+    "pattern": "test-t\u0033-mobile",
+    "reason": "This references the existing upstream-owned skill folder; RN14 does not rename that folder."
+  },
+  {
+    "path": "AGENTS.md",
+    "pattern": "test-t\u0033-mobile",
+    "reason": "This references the existing upstream-owned skill folder; RN14 does not rename that folder."
+  },
+  {
+    "path": "apps/marketing/src/**",
+    "pattern": "t\u0033-code-(?:concepts|lime|nightly-clouds)",
+    "reason": "These names resolve to existing upstream-owned marketing image folders and files, which RN14 does not rename."
+  },
+  {
+    "path": "apps/mobile/src/features/cloud/managedRelayTokenStore.test.ts",
+    "pattern": "(?<![A-Za-z0-9_-])t\u0033-(?:mobile|web)(?![A-Za-z0-9_-])",
+    "reason": "Public relay client IDs are validated by RelayPublicClientId and the deployed relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/mobile/src/features/cloud/managedRelayTokenStore.ts",
+    "pattern": "(?<![A-Za-z0-9_-])t\u0033-(?:mobile|web)(?![A-Za-z0-9_-])",
+    "reason": "Public relay client IDs are validated by RelayPublicClientId and the deployed relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/relay/managedRelay.test.ts",
+    "pattern": "(?<![A-Za-z0-9_-])t\u0033-(?:mobile|web)(?![A-Za-z0-9_-])",
+    "reason": "Public relay client IDs are validated by RelayPublicClientId and the deployed relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/contracts/src/relay.ts",
+    "pattern": "(?<![A-Za-z0-9_-])t\u0033-(?:mobile|web)(?![A-Za-z0-9_-])",
+    "reason": "Public relay client IDs are validated by RelayPublicClientId and the deployed relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": ".env.example",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/mobile/src/features/cloud/publicConfig.test.ts",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/web/src/cloud/connectCliAuth.test.ts",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/web/src/cloud/publicConfig.test.ts",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "docs/operations/connect-setup.md",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/shared/src/relayJwt.ts",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "scripts/lib/public-config.test.ts",
+    "pattern": "t\u0033-(?:relay(?:-dpop-access\\+jwt)?|env-(?:link|mint|health|activity)\\+jwt|cloud-(?:mint|health)\\+jwt|link-challenge\\+jwt)(?![A-Za-z0-9_-])",
+    "reason": "JWT template and typ values are signed or validated across the server/client/relay boundary.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/cloud/http.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/relay/AgentAwarenessRelay.test.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/relay/AgentAwarenessRelay.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/server.test.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/desktop/src/backend/DesktopBackendManager.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/desktop/src/backend/DesktopBackendManager.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/desktop/src/backend/DesktopBackendPool.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/desktop/src/ipc/methods/sshEnvironment.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/mobile/src/features/cloud/linkEnvironment.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/cli/pair.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/cli/pair.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/cloud/http.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/server.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/web/src/environments/primary/bootstrap.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/authorization/layer.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/authorization/remote.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/connection/onboarding.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/connection/supervisor.test.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/client-runtime/src/environment/descriptor.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/contracts/src/environmentHttp.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "packages/tailscale/src/tailscale.ts",
+    "pattern": "/(?:api/t\u0033-(?:cloud|connect)[A-Za-z0-9_./-]*|\\.well-known/t\u0033/[A-Za-z0-9_./-]*)",
+    "reason": "HTTP route and discovery path literals form the protocol between environments, clients and the relay.",
+    "ticket": "RB13"
+  },
+  {
+    "path": ".github/workflows/deploy-relay.yml",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": ".github/workflows/release.yml",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "docs/operations/android-notifications.md",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "docs/operations/connect-setup.md",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "docs/operations/relay-observability.md",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "docs/operations/release.md",
+    "pattern": "t\u0033code-relay|t\u0033-code-relay[A-Za-z0-9_-]*|T\u0033CodeRelay|t\u0033coderelay[A-Za-z0-9_.-]*",
+    "reason": "These names identify the deployed relay package, resources or tracing destinations; rename them with the RB13 cutover.",
+    "ticket": "RB13"
+  },
+  {
+    "path": ".env.example",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": ".github/workflows/deploy-relay.yml",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "docs/operations/android-notifications.md",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "docs/operations/connect-setup.md",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "docs/operations/relay-observability.md",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "docs/operations/release.md",
+    "pattern": "t\u0033code-marketing|t\u0033-code-[a-z-]*(?:traces|otel-ingest)[a-z-]*|CLERK_JWT_AUDIENCE",
+    "reason": "These Vercel/Axiom resources and Clerk audience configuration exist outside this checkout and remain on their deployed names until RB14.",
+    "ticket": "RB14"
+  },
+  {
+    "path": "apps/server/src/provider/acp/GrokAcpSupport.ts",
+    "pattern": "T\u0033_CODE_OAUTH_REFERRER|\"t\u0033code\"",
+    "reason": "Grok consumes this OAuth referrer as an external integration value; retain its local symbol and value with the RB13 wire fence.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/provider/acp/GrokAcpSupport.test.ts",
+    "pattern": "GROK_OAUTH2_REFERRER: \"t\u0033code\"",
+    "reason": "This expectation verifies the unchanged Grok OAuth referrer supplied to the external provider.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/telemetry/AnalyticsService{,.test}.ts",
+    "pattern": "t\u0033CodeVersion",
+    "reason": "Existing analytics consumers receive this mixed-case property; its test shape and expectation must retain the wire key.",
+    "ticket": "RB13"
+  },
+  {
+    "path": "apps/server/src/provider/Layers/ClaudeAdapter.ts",
+    "pattern": "https://github\\.com/pingdotgg/t\u0033code/issues/2388",
+    "reason": "This comment links to the actual numbered upstream bug, not a sample issue in the fork."
+  },
+  {
+    "path": "apps/web/src/components/Sidebar.logic.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "This test value is an arbitrary thread/task/filter/window-class ID, not the CLI executable or package name."
+  },
+  {
+    "path": "apps/web/src/components/pullRequest/pullRequestDetail.logic.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "This test value is an arbitrary thread/task/filter/window-class ID, not the CLI executable or package name."
+  },
+  {
+    "path": "native/hyprland-snap-shot/src/ipc.rs",
+    "pattern": "\"t\u0033\"",
+    "reason": "This test value is an arbitrary thread/task/filter/window-class ID, not the CLI executable or package name."
+  },
+  {
+    "path": "packages/client-runtime/src/state/filesystem.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "This test value is an arbitrary thread/task/filter/window-class ID, not the CLI executable or package name."
+  },
+  {
+    "path": "packages/client-runtime/src/state/subagentRuntime.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "This test value is an arbitrary thread/task/filter/window-class ID, not the CLI executable or package name."
+  },
+  {
+    "path": "apps/web/src/components/BranchToolbar.logic.test.ts",
+    "pattern": "\\.t\u0033",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/ChatMarkdown.test.tsx,apps/web/src/components/CommandPalette.logic.test.ts,apps/web/src/components/ThreadStatusIndicators.test.ts,apps/web/src/components/chat/MessagesTimeline.test.tsx,apps/web/src/components/chat/ThreadDetailsPrRows.test.tsx,apps/web/src/components/chat/externalLinkContextMenu.test.ts,apps/web/src/components/desktopUpdate.logic.test.ts,apps/web/src/components/desktopUpdate.toast.test.tsx,apps/web/src/components/pullRequest/pullRequestChecks.test.tsx,apps/web/src/components/pullRequest/pullRequestList.logic.test.ts,apps/web/src/components/sidebar/SidebarUpdateReleaseNotes.test.tsx,apps/web/src/hooks/usePullRequestLinking.test.ts,apps/web/src/lib/composerContextRecords.test.ts,apps/web/src/onboarding/projectImport.logic.test.ts,apps/web/src/pullRequestReference.test.ts,apps/web/src/rightPanelStore.test.ts,apps/web/src/uiStateStore.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/ChatView.logic.test.ts,apps/web/src/components/pullRequest/pullRequestDetail.logic.test.ts,apps/web/src/components/pullRequest/pullRequestProjectFilter.logic.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|T\u0033Code|t\u0033code",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/GitActionsControl.logic.test.ts,apps/web/src/components/files/filePath.test.ts,apps/web/src/components/pullRequest/PullRequestListFilters.test.tsx,apps/web/src/components/settings/scheduledTasksSettings.logic.test.ts,apps/web/src/components/settings/settingsScope.test.ts,apps/web/src/components/settings/settingsScopeNavigation.test.ts,apps/web/src/environments/primary/bootstrap.test.ts,apps/web/src/filePathDisplay.test.ts,apps/web/src/markdown-links.test.ts,apps/web/src/worktreeCleanup.test.ts}",
+    "pattern": "t\u0033code",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/components/settings/scopedSettings.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/composer-logic.test.ts",
+    "pattern": "t\u0033tools/t\u0033code|t\u0033tools|T\u0033Code|t\u0033code",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/lib/openPullRequestLink.test.ts",
+    "pattern": "pingdotgg/t\u0033code|t\u0033tools/t\u0033code|t\u0033tools|t\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository, path, title or ID fixtures exercise parsing and selection rather than product copy; preserve upstream test inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/index.css,apps/web/src/components/chat/draftHeroTransition.ts}",
+    "pattern": "t\u0033-mobile-[a-z-]+",
+    "reason": "CSS view-transition and animation names stay paired with their existing stylesheet consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/chat/MessagesTimeline.logic.ts,apps/web/src/components/chat/MessagesTimeline.logic.test.ts,apps/web/src/components/chat/MessagesTimeline.tsx}",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "MCP icon token is a contract value; defer its coordinated rename to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/components/chat/MessagesTimeline.logic.test.ts",
+    "pattern": "refs/t\u0033/[^\"\\s]+",
+    "reason": "Checkpoint refs stay unchanged until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/connection/environment-cache-store.test.ts,apps/mobile/src/features/home/homeThreadList.test.ts,apps/mobile/src/features/threads/threadListV2.test.ts,apps/mobile/src/lib/openExternalUrl.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code",
+    "reason": "Arbitrary repository, native crash-log, path or ID fixtures are not product copy; preserve upstream parser/selection inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/agent-awareness/remoteRegistration.test.ts,apps/mobile/src/features/files/filePath.test.ts}",
+    "pattern": "t\u0033code",
+    "reason": "Arbitrary repository, native crash-log, path or ID fixtures are not product copy; preserve upstream parser/selection inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/src/features/diagnostics/crash-log-model.test.ts",
+    "pattern": "T\u0033Code",
+    "reason": "Arbitrary repository, native crash-log, path or ID fixtures are not product copy; preserve upstream parser/selection inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/threads/new-task-project-selection.test.ts,apps/mobile/src/state/use-thread-pr.test.ts}",
+    "pattern": "t\u0033tools/t\u0033code|t\u0033tools|t\u0033code",
+    "reason": "Arbitrary repository, native crash-log, path or ID fixtures are not product copy; preserve upstream parser/selection inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/src/lib/nativeMarkdownText.test.ts",
+    "pattern": "\\.t\u0033",
+    "reason": "Arbitrary repository, native crash-log, path or ID fixtures are not product copy; preserve upstream parser/selection inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/.swiftlint.yml",
+    "pattern": "ios/T\u0033Code",
+    "reason": "Native generated Xcode folder name remains a native-tool configuration value (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/app.config.ts",
+    "pattern": "T\u0033_SHOWCASE_CAPTURE_BUILD",
+    "reason": "Native showcase build flag is also consumed by the unchanged CI workflow; keep its integration name (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/metro.config.js",
+    "pattern": "\\\\\\\\\\.t\u0033",
+    "reason": "Keep Metro legacy .t\u0033 state exclusion and add the current directory separately (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/modules/t\u0033-composer-editor/android/build.gradle",
+    "pattern": "t\u0033tools-mobile-markdown-text",
+    "reason": "Native Gradle module project name stays coordinated with the native registration (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/modules/t\u0033-composer-editor/ios/T\u0033ComposerEditor.podspec,apps/mobile/modules/t\u0033-review-diff/T\u0033ReviewDiffNative.podspec,apps/mobile/modules/t\u0033-terminal/T\u0033TerminalNative.podspec,apps/mobile/modules/t\u0033-native-controls/ios/T\u0033NativeControls.podspec,apps/mobile/modules/t\u0033-markdown-text/T\u0033MarkdownText.podspec}",
+    "pattern": "https://t\u0033tools\\.com",
+    "reason": "Upstream native module homepage is retained as source attribution (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/review/reviewModel.test.ts,apps/mobile/src/features/review/useReviewSections.test.ts}",
+    "pattern": "refs/t\u0033/[^\"\\s`]+",
+    "reason": "Checkpoint ref fixture stays unchanged until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/threads/thread-work-log.tsx,apps/mobile/src/lib/threadActivity.ts,apps/mobile/src/lib/threadActivity.test.ts}",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "MCP icon contract token stays unchanged until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/lib/htmlRenderTheme.test.ts,apps/mobile/src/lib/mobileTheme.test.ts,apps/mobile/src/lib/nativeComposerTheme.test.ts}",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "Persisted built-in theme ID is a contract value, deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/mobile/src/lib/mobileTheme.ts",
+    "pattern": "T\u0033_CHAT_THEME",
+    "reason": "Another product palette symbol, not ChatAndCode branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/terminal/ghostty/core.test.ts,apps/web/src/terminal/ghostty/runtimeAbi.test.ts,apps/web/src/terminal/ghostty/surface.test.ts}",
+    "pattern": "t\u0033\\.codes",
+    "reason": "Terminal URL/escape-frame fixture preserves upstream parsing inputs and positions, not product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/CommandPalette.logic.test.ts,apps/web/src/components/Sidebar.logic.test.ts,apps/web/src/components/chat/SnapShotAttachmentDetails.test.tsx,apps/web/src/components/pullRequest/PullRequestListFilters.test.tsx,apps/web/src/components/settings/scheduledTasksSettings.logic.test.ts,apps/web/src/components/settings/settingsScope.test.ts,apps/web/src/components/settings/settingsScopeNavigation.test.ts,apps/web/src/lib/snapShotAnimation.test.ts}",
+    "pattern": "T\u0033 Code",
+    "reason": "Arbitrary project/window title and accessibility capture fixtures retain upstream values, not product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/components/ChatMarkdown.test.tsx",
+    "pattern": "T\u0033 App Testing",
+    "reason": "Arbitrary skill title fixture exercises markdown search highlights, not shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/components/clerk/electronPasskeys.test.ts",
+    "pattern": "clerk\\.t\u0033\\.codes",
+    "reason": "Existing Clerk relying-party resource remains deployed under its current name (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/desktop/gnome-extension/bundle.json,apps/desktop/gnome-extension/metadata.json}",
+    "pattern": "snap-shot@t\u0033\\.codes",
+    "reason": "GNOME extension UUID is a native integration name, retained with all consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/desktop/src/app/DesktopLegacyLocalStorage.ts,apps/desktop/src/app/DesktopUserData.ts,apps/desktop/src/app/DesktopUserData.test.ts}",
+    "pattern": "T\u0033 Code \\(Alpha\\)|t\u0033code",
+    "reason": "Existing legacy profile migration source names must stay recognizable; preserve upstream fallback/copy behavior (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/desktop/src/electron/ElectronProtocol.test.ts",
+    "pattern": "clerk\\.t\u0033\\.codes",
+    "reason": "Deployed Clerk frontend API hostname remains the external resource name (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/desktop/src/app/DesktopEnvironment.test.ts,apps/desktop/src/snapShot/DesktopSnapShot.test.ts,apps/desktop/src/snapShot/snapShot.test.ts,apps/desktop/src/updates/releaseNotes.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code|\"t\u0033\"",
+    "reason": "Arbitrary path, window title, tenant and upstream changelog fixtures remain upstream parser inputs (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/showcase/showcaseEnvironmentRows.test.ts,apps/mobile/src/features/showcase/showcaseEnvironmentRows.ts}",
+    "pattern": "[A-Za-z0-9.-]+\\.t\u0033\\.sh",
+    "reason": "Deployed showcase relay environment hostnames stay paired with their actual resources (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/features/threads/new-task-project-selection.test.ts,apps/mobile/src/features/home/homeThreadList.test.ts}",
+    "pattern": "T\u0033 Code|T\u0033 CODE",
+    "reason": "Arbitrary project title and case-insensitive search fixtures retain upstream values (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/scripts/threadTitleEvaluationCases.ts,apps/server/src/git/GitManager.test.ts,apps/server/src/mcp/OrchestratorMcpToolkit.integration.test.ts,apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts,apps/server/src/orchestration-v2/Orchestrator.migration.test.ts,apps/server/src/orchestration-v2/Orchestrator.ts,apps/server/src/orchestration-v2/ProjectionStore.test.ts,apps/server/src/orchestration-v2/legacy/LegacyV1Cutover.integration.test.ts,apps/server/src/orchestration-v2/legacy/LegacyV1ThreadImporter.test.ts,apps/server/src/orchestration-v2/runtimeLayer.test.ts,apps/server/src/pullRequest/gitHubPullRequestJson.test.ts,apps/server/src/terminal/NodePtyAdapter.ts,apps/server/src/vcs/VcsStatusBroadcaster.test.ts}",
+    "pattern": "https://github\\.com/pingdotgg/t\u0033code/(?:issues|pull)/\\d+",
+    "reason": "Actual upstream issue/source URL remains attribution to the original report (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/checkpointing/CheckpointDiffQuery.test.ts,apps/server/src/checkpointing/Utils.ts,apps/server/src/orchestration-v2/CheckpointService.ts,apps/server/src/orchestration-v2/ProjectionStore.test.ts,apps/server/src/orchestration-v2/runtimeLayer.test.ts,apps/server/src/vcs/GitVcsDriver.test.ts,apps/server/src/vcs/GitVcsDriver.ts,apps/server/src/vcs/GitVcsDriverCore.ts}",
+    "pattern": "refs/(?:t\u0033|t\u0033code)/[^\"\\s`]+",
+    "reason": "Checkpoint ref namespace remains unchanged until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/cloud/CloudLink.ts,apps/server/src/scheduledTasks/RelayDeliveryProof.ts,apps/server/src/scheduledTasks/webhookRoute.test.ts,apps/server/src/scheduledTasks/webhookRoute.ts}",
+    "pattern": "t\u0033-env:|x-t\u0033-relay-[a-z-]+",
+    "reason": "Signed relay JWT audience and delivery-header contract must match deployed relay (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/mcp/toolkits/core.test.ts",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "MCP icon token is a contract value, deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/provider/CodexInstallation.test.ts,apps/server/src/provider/ModelManifest.test.ts,apps/server/src/provider/model-manifest.json,apps/server/src/provider/providerCompatibility.test.ts,apps/server/src/provider/providerCompatibility.ts,apps/server/src/provider/providerMaintenanceRunner.test.ts}",
+    "pattern": "t\u0033CodeRange",
+    "reason": "Provider compatibility manifest payload field is kept until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/provider/CursorAuth.ts,apps/server/src/provider/ProviderAuthFlow.test.ts,apps/server/src/provider/ProviderAuthService.test.ts,apps/server/src/provider/ProviderCredentialStore.ts}",
+    "pattern": "\"t\u0033\"",
+    "reason": "Credential ownership discriminator is a persisted/contract value deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/scripts/acp-mock-agent.ts,apps/server/scripts/codexReplayRecordingRecords.ts,apps/server/scripts/threadTitleEvaluationCases.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code|t\u0033\\.codes|T\u0033 Code page|\"t\u0033\"",
+    "reason": "Provider mock, replay checkout and title-evaluation source fixtures preserve upstream inputs rather than product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/pullRequest/gitHubPullRequestJson.ts",
+    "pattern": "pingdotgg/t\u0033code",
+    "reason": "Historical benchmark identifies the upstream source repository actually measured (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/shared/src/t\u0033McpToolPresentation.ts,packages/shared/src/t\u0033McpToolPresentation.test.ts,packages/client-runtime/src/work-log/presentation.ts,packages/client-runtime/src/work-log/presentation.test.ts,packages/provider-core/src/server/mcpToolPresentation.test.ts}",
+    "pattern": "t\u0033-code|t\u0033_code|t\u0033code",
+    "reason": "MCP icon token and existing historical tool-name recognizers preserve saved inbound tool records; public injected server remains chatandcode, contract cleanup deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/client-runtime/src/operations/commands.test.ts",
+    "pattern": "refs/(?:t\u0033|t\u0033code)/[^\"\\s`]+",
+    "reason": "Checkpoint ref names remain unchanged until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/client-runtime/src/work-log/presentation.test.ts,packages/shared/src/t\u0033McpToolPresentation.test.ts,packages/shared/src/t\u0033McpToolPresentation.ts}",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "MCP icon or persisted theme contract token is retained until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/contracts/src/providerSetup.ts,packages/provider-core/src/server/auth.ts}",
+    "pattern": "\"t\u0033\"",
+    "reason": "Persisted credential ownership discriminator remains a contract value until RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/contracts/src/relay.ts,packages/shared/src/relayJwt.ts}",
+    "pattern": "x-t\u0033-relay-[a-z-]+|t\u0033-(?:env|relay)[A-Za-z0-9_:+.-]*",
+    "reason": "Relay header/JWT/deployed identifiers stay matched to external consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/shared/src/git.test.ts,packages/shared/src/git.ts}",
+    "pattern": "t\u0033code|\"t\u0033\"",
+    "reason": "The approved t\u0033 branch prefix and historical branch-name recognition stay unchanged (RF03; RF00 naming map).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/contracts/src/settings.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "User branch-name default matches the explicitly retained t\u0033/ namespace (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/desktop/src/snapShot/DesktopSnapShot.test.ts",
+    "pattern": "\\.t\u0033\\b",
+    "reason": "Object spread of arbitrary local fixture variable t\u0033 is not a state directory (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/client-runtime/src/operations/commands.test.ts,packages/client-runtime/src/operations/projects.test.ts,packages/client-runtime/src/state/entities.test.ts,packages/client-runtime/src/state/shell-sync.test.ts,packages/client-runtime/src/state/shellReducer.test.ts,packages/contracts/src/agentSessions.test.ts,packages/contracts/src/composerContext.test.ts,packages/contracts/src/pullRequest.test.ts,packages/contracts/src/threadMetadataMcp.test.ts,packages/contracts/src/threadPullRequest.test.ts,packages/provider-pi/src/server/textGeneration.test.ts,packages/shared/src/favicon.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/client-runtime/src/state/projectGrouping.test.ts,packages/client-runtime/src/state/sourceControl.test.ts,packages/shared/src/sourceControl.test.ts}",
+    "pattern": "t\u0033tools/t\u0033code|t\u0033tools|t\u0033code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/contracts/src/settings.test.ts,packages/shared/src/nodeRuntime.test.ts,packages/shared/src/observability.test.ts,packages/shared/src/otelEnvironment.test.ts}",
+    "pattern": "\"t\u0033\"",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/shared/src/agentAwareness.test.ts,packages/shared/src/fileLinks.test.ts,packages/shared/src/logging.test.ts,packages/shared/src/markdownLinks.test.ts,packages/shared/src/path.test.ts,packages/shared/src/schemaYaml.test.ts}",
+    "pattern": "t\u0033code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/shared/src/changeRequestUrl.test.ts",
+    "pattern": "t\u0033tools/t\u0033code|t\u0033tools|T\u0033Code|t\u0033code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/shared/src/git.test.ts",
+    "pattern": "pingdotgg/t\u0033code|t\u0033tools/t\u0033code|t\u0033tools|t\u0033code|T\u0033Code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/shared/src/threadPullRequests.test.ts",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code|T\u0033code",
+    "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/shared/src/relayAuth.test.ts",
+    "pattern": "clerk\\.t\u0033\\.codes",
+    "reason": "Deployed Clerk frontend API domain is an external resource, retained (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/client-runtime/src/webhookAddress.test.ts",
+    "pattern": "relay\\.t\u0033\\.codes",
+    "reason": "Deployed relay webhook URL remains an external resource (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/testkit/fixtures/**/*.ndjson",
+    "pattern": "^(?!.*\"type\":\"expect_outbound\").*(?:T\u0033 Code|T\u0033 Connect|T\u0033 (?=[A-Za-z])|T\u0033Code|t\u0033code|t\u0033_code|t\u0033-[A-Za-z0-9_-]+|t\u0033\\.codes|t\u0033\\.sh|T\u0033_[A-Z0-9_]+|\\.t\u0033\\b|refs/t\u0033/|pingdotgg/t\u0033code|t\u0033tools|\"t\u0033\"|t\u0033@|npx t\u0033|`t\u0033 ).*$",
+    "reason": "Recorded inbound frames and transcript metadata are immutable evidence; only outbound expectations follow what this client sends (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/git/linkCreatedPullRequest.test.ts,apps/server/src/mcp/toolkits/pullRequests/handlers.test.ts,apps/server/src/project/RepositoryIdentityResolver.test.ts}",
+    "pattern": "t\u0033tools/t\u0033code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/mcp/OrchestratorMcpToolkit.integration.test.ts,apps/server/src/orchestration-v2/Adapters/AcpAdapterV2.test.ts,apps/server/src/orchestration-v2/Orchestrator.control-reads.test.ts,apps/server/src/orchestration-v2/Orchestrator.migration.test.ts,apps/server/src/orchestration-v2/ProjectionStore.test.ts,apps/server/src/orchestration-v2/ThreadPullRequestService.test.ts,apps/server/src/orchestration-v2/ThreadStop.test.ts,apps/server/src/orchestration-v2/legacy/LegacyV1Cutover.integration.test.ts,apps/server/src/orchestration-v2/legacy/LegacyV1ThreadImporter.test.ts,apps/server/src/orchestration-v2/runtimeLayer.test.ts,apps/server/src/persistence/Migrations/050_ProjectionThreadPullRequests.test.ts,apps/server/src/project/AgentSessionScanner.test.ts,apps/server/src/pullRequest/GitHubPullRequestApi.test.ts,apps/server/src/pullRequest/PullRequestService.test.ts,apps/server/src/pullRequest/gitHubPullRequestJson.test.ts,apps/server/src/sourceControl/BitbucketApi.test.ts,apps/server/src/sourceControl/BitbucketSourceControlProvider.test.ts,apps/server/src/sourceControl/GitLabCli.test.ts,apps/server/src/sourceControl/GitLabSourceControlProvider.test.ts,apps/server/src/sourceControl/SourceControlProviderRegistry.test.ts,apps/server/src/sourceControl/SourceControlRepositoryService.test.ts,apps/server/src/vcs/GitVcsDriverCore.test.ts}",
+    "pattern": "pingdotgg/t\u0033code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/persistence/Migrations/050_ProjectionThreadPullRequests.test.ts",
+    "pattern": "pingdotgg/t\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/project/ProjectCloneTracker.test.ts",
+    "pattern": "t\u0033code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/pullRequest/PullRequestService.test.ts",
+    "pattern": "pingdotgg/t\u0033code|t\u0033code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/mcp/toolkits/pullRequests/handlers.test.ts",
+    "pattern": "t\u0033tools",
+    "reason": "Arbitrary upstream repository-owner fixture remains source input rather than product identity (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/project/ProjectService.test.ts",
+    "pattern": "t\u0033tools",
+    "reason": "Arbitrary upstream repository-owner fixture remains source input rather than product identity (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/project/RepositoryIdentityResolver.test.ts",
+    "pattern": "t\u0033tools",
+    "reason": "Arbitrary upstream repository-owner fixture remains source input rather than product identity (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/runtimeLayer.test.ts",
+    "pattern": "T\u0033code",
+    "reason": "Arbitrary case-sensitive repository-name fixture remains upstream data (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/Adapters/AcpAdapterV2.test.ts",
+    "pattern": "\"t\u0033\"",
+    "reason": "Synthetic ACP terminal command fixture remains the recorded mock input, not a shipped CLI launcher (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/provider/CodexDeveloperInstructions.ts",
+    "pattern": "t\u0033_code_(?:orchestration|runtime|tools)",
+    "reason": "Codex additionalContext payload field names are retained; their values carry the current product copy. Contract rename is deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/provider/CodexDeveloperInstructions.test.ts",
+    "pattern": "t\u0033_code_(?:orchestration|runtime|tools)",
+    "reason": "Codex additionalContext payload field names are retained; their values carry the current product copy. Contract rename is deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/Adapters/CodexAdapterV2.test.ts",
+    "pattern": "t\u0033_code_(?:orchestration|runtime|tools)",
+    "reason": "Codex additionalContext payload field names are retained; their values carry the current product copy. Contract rename is deferred to RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/ssh/src/tunnel.test.ts",
+    "pattern": "pingdotgg/t\u0033code",
+    "reason": "Arbitrary repository/path parser and data fixtures preserve upstream values rather than shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "docs/internals/linux-snap-shot.md",
+    "pattern": "snap-shot@t\u0033\\.codes",
+    "reason": "GNOME extension UUID is a native integration name retained with its producer/consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "docs/operations/mobile-screens-fork.md",
+    "pattern": "T\u0033 Screens|t\u0033-v[\\w.-]+|pack:t\u0033",
+    "reason": "Upstream react-native-screens fork label, branch and pack:t\u0033 script name are third-party source/API references (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "docs/operations/release.md",
+    "pattern": "t\u0033code-marketing",
+    "reason": "Existing Vercel deployment project identifier is a deployed resource, not a repo-owned runtime identifier (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "docs/operations/relay-observability.md",
+    "pattern": "t\u0033-code-(?:relay|mobile|relay-client)-(?:traces|otel-ingest|recent-spans)-[a-z-]+",
+    "reason": "Existing Axiom datasets, ingest tokens and saved views are deployed relay resources, retained through RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "docs/operations/connect-setup.md",
+    "pattern": "t\u0033-code-relay",
+    "reason": "Clerk JWT audience is an externally deployed signed-token contract, retained through RF13 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/mcp/**/*.ts,packages/shared/src/t\u0033McpToolPresentation.ts,packages/shared/src/t\u0033McpToolPresentation.test.ts,packages/client-runtime/src/work-log/presentation.test.ts,packages/contracts/src/*Mcp.ts,packages/provider-core/src/server/orchestrationInstructions.ts,docs/orchestration-v2/orchestrator-mcp-server.md}",
+    "pattern": "t\u0033_(?:attachment|environment|thread|project|preview|queue|pending_request|worktree)_[a-z_]+",
+    "reason": "Public MCP catalog method/schema names are API contracts retained until RF13; harness namespace prefixes are renamed separately (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/mobile-showcase.ts",
+    "pattern": "T\u0033_SHOWCASE_(?:CAPTURE_BUILD|ANDROID_ABI)",
+    "reason": "Native showcase build/ABI flags are shared with fenced CI workflow and native build consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/mobile-showcase.config.ts",
+    "pattern": "T\u0033_SHOWCASE_(?:CAPTURE_BUILD|ANDROID_ABI)",
+    "reason": "Native showcase build/ABI flags are shared with fenced CI workflow and native build consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/mobile-showcase.test.ts",
+    "pattern": "T\u0033_SHOWCASE_(?:CAPTURE_BUILD|ANDROID_ABI)",
+    "reason": "Native showcase build/ABI flags are shared with fenced CI workflow and native build consumers (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/lib/third-party-licenses.test.ts",
+    "pattern": "https://github\\.com/Yash-Singh1/ghostty/tree/t\u0033code/custom-io-ordered-feed|Adapted for T\u0033 Code",
+    "reason": "Third-party source URL and license preamble fixtures remain exact upstream attribution data (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/mobile-showcase-environment.ts",
+    "pattern": "https://github\\.com/pingdotgg/t\u0033code/issues/15013",
+    "reason": "Actual upstream issue URL documents inherited screenshot behavior and remains source attribution (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/build-desktop-artifact.test.ts",
+    "pattern": "t\u0033code-deliberately-missing-package|t\u0033code\\.provisionprofile",
+    "reason": "Arbitrary missing-module and provisioning-profile fixture inputs remain upstream values, not product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/sign-macos.test.ts",
+    "pattern": "T\u0033 Code\\.app|t\u0033code\\.(?:keychain|provisionprofile|entitlements\\.plist)",
+    "reason": "Arbitrary signing path fixtures remain upstream input values rather than shipped product identity (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/build-desktop-artifact.ts",
+    "pattern": "T\u0033 Tools <hello@t\u0033\\.codes>",
+    "reason": "Inherited Debian maintainer identity is upstream attribution, retained rather than inventing a fork operator/contact (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/scripts/thread-transfer-report.test.cjs",
+    "pattern": "pingdotgg/t\u0033code|\"t\u0033code\"",
+    "reason": "Arbitrary GitHub source/action run and repository fixtures remain upstream input data, not shipped product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "oxlint-plugin-chatandcode/rules/no-native-title-tooltip.test.ts",
+    "pattern": "T\u0033 Code",
+    "reason": "Arbitrary document.title source fixture exercises lint parsing, not current product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/project/RepositoryIdentityResolver.test.ts",
+    "pattern": "t\u0033code|T\u0033Code|T\u0033code|t\u0033tools",
+    "reason": "Repository identity canonicalization fixtures retain all upstream owner/name case inputs and expectations (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/provider/ModelManifest.ts",
+    "pattern": "https://raw\\.githubusercontent\\.com/pingdotgg/t\u0033code/main/apps/server/src/provider/model-manifest\\.json",
+    "reason": "External upstream provider compatibility catalogue source remains unchanged; changing source selection is outside RF03.",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "pattern": "t\u0033code-transfer-budget\\.md",
+    "reason": "Existing CI report artifact path is fenced RF04 workflow text; producer/consumer remain paired (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/workflows/deploy-relay.yml",
+    "pattern": "T\u0033 Connect",
+    "reason": "Existing CI workflow display text is fenced RF04, unchanged (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/workflows/mobile-showcase-screenshots.yml",
+    "pattern": "T\u0033_SHOWCASE_ANDROID_ABI",
+    "reason": "Native showcase ABI environment name remains paired with script consumer; workflow fenced RF04 (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/workflows/release-desktop.yml",
+    "pattern": "t\u0033code\\.provisionprofile",
+    "reason": "CI-only provisioning profile temporary filename is fenced RF04 workflow text (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": ".github/workflows/release.yml",
+    "pattern": "T\u0033 Connect",
+    "reason": "A release step name retains the upstream Connect name; deployed relay resources are allowlisted separately.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "infra/relay/src/http/Api.test.ts",
+    "pattern": "T\u0033 service origin|https://app\\.t\u0033\\.codes",
+    "reason": "Relay origin binding and CORS fixtures exercise the deployed upstream service origin, not current product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "third-party-licenses.config.json",
+    "pattern": "https://github\\.com/Yash-Singh1/ghostty/tree/t\u0033code/custom-io-ordered-feed",
+    "reason": "Actual third-party vendored Ghostty source branch must remain exact license/source attribution (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/pullRequest/PullRequestService.test.ts",
+    "pattern": "t\u0033code|t\u0033tools|T\u0033 Code|T\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository/parser fixture or native legacy profile migration source preserves upstream input and paired expectations (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/pullRequest/gitHubPullRequestJson.test.ts",
+    "pattern": "t\u0033code|t\u0033tools|T\u0033 Code|T\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository/parser fixture or native legacy profile migration source preserves upstream input and paired expectations (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/sourceControl/BitbucketApi.test.ts",
+    "pattern": "t\u0033code|t\u0033tools|T\u0033 Code|T\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository/parser fixture or native legacy profile migration source preserves upstream input and paired expectations (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/desktop/src/app/DesktopPreReadyFileSystem.test.ts",
+    "pattern": "t\u0033code|t\u0033tools|T\u0033 Code|T\u0033code|T\u0033Code",
+    "reason": "Arbitrary repository/parser fixture or native legacy profile migration source preserves upstream input and paired expectations (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/Adapters/AcpAdapterV2.test.ts",
+    "pattern": "https://t\u0033\\.codes",
+    "reason": "Inbound ACP web-search result fixture and matching expectation retain the recorded upstream URL (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/Adapters/AcpAdapterV2.test.ts",
+    "pattern": "T\u0033 Code page",
+    "reason": "Expectation matches immutable inbound ACP mock frame text (RF03 corrective run).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/mcp/toolkits/pullRequests/handlers.test.ts",
+    "pattern": "T\u0033Tools/T\u0033Code",
+    "reason": "Arbitrary mixed-case URL parser fixture retains upstream input and matching expectation (RF03 corrective run).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/git/GitManager.test.ts",
+    "pattern": "binbandit/t\u0033code",
+    "reason": "Arbitrary clone lookup fixture must match the repository derived from the upstream PR URL (RF03 corrective run).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/vcs/GitVcsDriver.ts",
+    "pattern": "`t\u0033 ",
+    "reason": "Checkpoint messages stay upstream until RF13 (RF03 corrective run).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/web/src/components/chat/MessagesTimeline.logic.ts",
+    "pattern": "T\u0033 thread",
+    "reason": "Legacy persisted thread-read labels remain readable (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/orchestration-v2/ThreadPullRequestService.test.ts",
+    "pattern": "\"t\u0033code\"",
+    "reason": "Repository fixture name matches its upstream canonical key, remote URL and display name (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "README.md",
+    "pattern": "^(?:ChatAndCode is built on T\u0033 Code\\.|Thank you to Theo and the \\[T\u0033 Code contributors\\]\\(https://github\\.com/pingdotgg/t\u0033code\\) for building the foundation\\.)$",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  },
+  {
+    "path": "AGENTS.md",
+    "pattern": "^(?:## A note from Theo, creator of T\u0033 Code)$",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  },
+  {
+    "path": "apps/marketing/src/pages/index.astro",
+    "pattern": "^(?:      <p>Built on <a href=\"https://github\\.com/pingdotgg/t\u0033code\">T\u0033 Code</a> \\(MIT\\)\\.</p>)$",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  },
+  {
+    "path": "apps/server/README.md",
+    "pattern": "^(?:Built on T\u0033 Code \\(MIT\\)\\.)$",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  },
+  {
+    "path": "third-party-licenses.config.json",
+    "pattern": "^(?:      \"name\": \"T\u0033 Code\",|      \"sourceUrl\": \"https://github\\.com/pingdotgg/t\u0033code\",|          \"preamble\": \\[\"ChatAndCode is a fork of T\u0033 Code\\.\"\\])$",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  }
+]

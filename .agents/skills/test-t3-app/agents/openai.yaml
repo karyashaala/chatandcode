@@ -1,0 +1,4 @@
+interface:
+  display_name: "ChatAndCode App Testing"
+  short_description: "Test web and desktop in ChatAndCode's Browser panel"
+  default_prompt: "Use $test-t3-app to verify the affected web or desktop flow through ChatAndCode's Browser panel."

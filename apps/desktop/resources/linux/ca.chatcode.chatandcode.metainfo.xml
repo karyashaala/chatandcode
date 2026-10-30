@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>ca.chatcode.chatandcode</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>ChatAndCode</name>
+  <summary>Desktop GUI for coding agents</summary>
+  <developer id="ca.chatcode">
+    <name>ChatAndCode</name>
+  </developer>
+  <description>
+    <p>
+      ChatAndCode is an open-source desktop app for coding agents. Work with your
+      existing agent subscriptions, review code changes, and run commands in
+      your projects.
+    </p>
+    <p>
+      Connect from desktop, web, or mobile to continue working remotely.
+    </p>
+  </description>
+  <launchable type="desktop-id">chatandcode.desktop</launchable>
+  <icon type="stock">chatandcode</icon>
+  <provides>
+    <binary>chatandcode</binary>
+  </provides>
+  <categories>
+    <category>Development</category>
+  </categories>
+  <url type="homepage">https://chatcode.ca</url>
+  <url type="bugtracker">https://github.com/karyashaala/chatandcode/issues</url>
+  <url type="vcs-browser">https://github.com/karyashaala/chatandcode</url>
+</component>
