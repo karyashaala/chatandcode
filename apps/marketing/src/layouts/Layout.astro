@@ -1,7 +1,6 @@
 ---
 import { getImage, Image } from "astro:assets";
 import appIcon from "../assets/icon.webp";
-import socialCard from "../assets/social-card.webp";
 import dmSansLatinUrl from "../assets/fonts/dm-sans-latin.woff2?url";
 import "../styles/fonts.css";
 import { DISCORD_INVITE_URL, GITHUB_REPOSITORY_URL } from "../lib/site";
@@ -18,19 +17,17 @@ const {
   pageClass,
 } = Astro.props;
 
-// Social preview card, shared by og:image and twitter:image. Link unfurlers
-// (Instagram, iMessage, X, Slack) want a 1200x630 jpg or png at an absolute URL.
-// The source is a 2x export so the downscale stays sharp.
+// Use the square app icon for social previews, with an absolute URL
+// so link unfurlers can fetch it.
 const socialImage = await getImage({
-  src: socialCard,
-  width: 1200,
-  height: 630,
-  format: "jpg",
+  src: appIcon,
+  width: 1024,
+  height: 1024,
+  format: "png",
   quality: 90,
 });
 const socialImageUrl = new URL(socialImage.src, Astro.site);
-const socialImageAlt =
-  "ChatAndCode: the open-source control plane for coding agents, with Claude Code, Codex, Cursor, OpenCode, Grok and Antigravity.";
+const socialImageAlt = "The ChatAndCode app icon.";
 const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
 ---
 
@@ -46,10 +43,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site);
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={socialImageUrl} />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="1024" />
+    <meta property="og:image:height" content="1024" />
     <meta property="og:image:alt" content={socialImageAlt} />
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={socialImageUrl} />

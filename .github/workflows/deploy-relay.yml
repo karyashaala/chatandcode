@@ -1,4 +1,4 @@
-name: Deploy T3 Connect relay
+name: Deploy ChatAndCode Connect relay
 
 on:
   # Production relay deploys are manual, including after variable or secret changes.

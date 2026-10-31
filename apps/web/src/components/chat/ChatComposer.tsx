@@ -1086,9 +1086,6 @@ import {
   MenuRadioGroup,
   MenuRadioItem,
   MenuSeparator,
-  MenuSub,
-  MenuSubPopup,
-  MenuSubTrigger,
   MenuTrigger,
 } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
@@ -1370,79 +1367,76 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
   );
 });
 
-/** The chat mode pill's menu: Mode (and Work's Access) on a draft, Access only once started. */
-function ChatModeMenuItems(props: {
+/** A draft chat's Chat or Work choice, for the mode pill and the overflow menu. */
+function ChatSubModeMenuItems(props: {
   chatSubMode: "chat" | "work";
-  runtimeMode: RuntimeMode;
-  onChatSubModeChange: ((mode: "chat" | "work") => void) | undefined;
-  onRuntimeModeChange: (mode: RuntimeMode) => void;
+  onChatSubModeChange: (mode: "chat" | "work") => void;
 }) {
-  const onChatSubModeChange = props.onChatSubModeChange;
-  const accessItems = (
-    <MenuRadioGroup
-      value={props.runtimeMode}
-      onValueChange={(value) => {
-        if (!value || value === props.runtimeMode) return;
-        props.onRuntimeModeChange(value as RuntimeMode);
-      }}
-    >
-      {chatRuntimeModeOptions.map((option) => (
-        <MenuRadioItem key={option.mode} value={option.mode}>
-          {option.label}
-        </MenuRadioItem>
-      ))}
-    </MenuRadioGroup>
-  );
-  return onChatSubModeChange === undefined ? (
-    <>
-      <div className="px-2 py-1.5 font-medium text-muted-foreground text-xs">Access</div>
-      {accessItems}
-    </>
-  ) : (
+  return (
     <>
       <div className="px-2 py-1.5 font-medium text-muted-foreground text-xs">Mode</div>
       <MenuRadioGroup
         value={props.chatSubMode}
         onValueChange={(value) => {
-          if (value === "chat" || value === "work") onChatSubModeChange(value);
+          if (value === "chat" || value === "work") props.onChatSubModeChange(value);
         }}
       >
         <MenuRadioItem value="chat">Chat — Search only</MenuRadioItem>
         <MenuRadioItem value="work">Work — All tools on your Mac</MenuRadioItem>
       </MenuRadioGroup>
-      {props.chatSubMode === "work" ? (
-        <>
-          <MenuSeparator />
-          <MenuSub>
-            <MenuSubTrigger>Access</MenuSubTrigger>
-            <MenuSubPopup>{accessItems}</MenuSubPopup>
-          </MenuSub>
-        </>
-      ) : null}
+    </>
+  );
+}
+
+/** Work's Access choices, for the overflow menu once the Access control hides. */
+function ChatAccessMenuItems(props: {
+  runtimeMode: RuntimeMode;
+  onRuntimeModeChange: (mode: RuntimeMode) => void;
+}) {
+  return (
+    <>
+      <div className="px-2 py-1.5 font-medium text-muted-foreground text-xs">Access</div>
+      <MenuRadioGroup
+        value={props.runtimeMode}
+        onValueChange={(value) => {
+          if (!value || value === props.runtimeMode) return;
+          props.onRuntimeModeChange(value as RuntimeMode);
+        }}
+      >
+        {chatRuntimeModeOptions.map((option) => (
+          <MenuRadioItem key={option.mode} value={option.mode}>
+            {option.label}
+          </MenuRadioItem>
+        ))}
+      </MenuRadioGroup>
     </>
   );
 }
 
 /**
- * A chat's mode pill, shown instead of the code mode controls. A draft picks
- * Chat or Work (and Work's Access); a started chat's mode is fixed, so Chat is
- * a plain label and Work offers Access only.
+ * A chat's mode pill. A draft picks Chat or Work; a started chat's mode is
+ * fixed, so the pill is a plain label. Work's Access is its own control.
  */
 const ChatModeControl = memo(function ChatModeControl(props: {
   chatSubMode: "chat" | "work";
-  runtimeMode: RuntimeMode;
   size: "sm" | "xs";
   hidden: boolean;
   onChatSubModeChange: ((mode: "chat" | "work") => void) | undefined;
-  onRuntimeModeChange: (mode: RuntimeMode) => void;
 }) {
   const composerFloatingLayerProps = useComposerMenuProps();
   const [open, setOpen] = useComposerMenuState(props.hidden);
-  if (props.onChatSubModeChange === undefined && props.chatSubMode === "chat") {
+  if (props.onChatSubModeChange === undefined) {
     return (
       <>
         <ComposerControlSeparator size={props.size} />
-        <span className="px-2 font-medium text-muted-foreground text-sm">Chat</span>
+        <span
+          className={cn(
+            "px-2 font-medium text-sm",
+            props.chatSubMode === "work" ? "text-warning" : "text-muted-foreground",
+          )}
+        >
+          {props.chatSubMode === "work" ? "Work" : "Chat"}
+        </span>
       </>
     );
   }
@@ -1468,11 +1462,9 @@ const ChatModeControl = memo(function ChatModeControl(props: {
           <ComposerControlChevron size={props.size} className="text-current" />
         </MenuTrigger>
         <MenuPopup align="start" {...composerFloatingLayerProps}>
-          <ChatModeMenuItems
+          <ChatSubModeMenuItems
             chatSubMode={props.chatSubMode}
-            runtimeMode={props.runtimeMode}
             onChatSubModeChange={props.onChatSubModeChange}
-            onRuntimeModeChange={props.onRuntimeModeChange}
           />
         </MenuPopup>
       </Menu>
@@ -5570,8 +5562,9 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
   const restingProviderTraitsPicker = renderProviderTraitsPicker({
     ...providerTraitsPickerInput,
     size: composerControlsCollapsed ? "xs" : "sm",
-    // Traits hides second in a code thread, first in a chat (see restingBlockDefs).
-    hidden: composerControlsHidden || restingHiddenBlockCount > (chatSubMode === undefined ? 1 : 0),
+    // Traits leads restingBlockDefs, so it hides after every block behind it:
+    // the mode controls, or a chat's pill and Work's Access.
+    hidden: composerControlsHidden || restingHiddenBlockCount > (chatSubMode === "work" ? 2 : 1),
   });
   const traitsBlockDefs = [
     ...(providerTraitsPicker
@@ -5588,7 +5581,8 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         ]
       : []),
   ];
-  // The chat pill leads so it is the last block to hide.
+  // A chat lays out like a code thread, with its mode pill before Access:
+  // Model | Effort | Chat or Work | Access (Work only). Blocks hide from the end.
   const restingBlockDefs =
     chatSubMode === undefined
       ? [
@@ -5610,24 +5604,72 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
           },
         ]
       : [
+          ...traitsBlockDefs,
           {
             id: "chat-mode",
             content: (
               <ChatModeControl
                 chatSubMode={chatSubMode}
-                runtimeMode={runtimeMode}
                 size={composerControlsCollapsed ? "xs" : "sm"}
-                hidden={composerControlsHidden || restingHiddenBlockCount > traitsBlockDefs.length}
+                hidden={
+                  composerControlsHidden ||
+                  restingHiddenBlockCount > (chatSubMode === "work" ? 1 : 0)
+                }
                 onChatSubModeChange={onChatSubModeChange}
-                onRuntimeModeChange={handleRuntimeModeChange}
               />
             ),
           },
-          ...traitsBlockDefs,
+          ...(chatSubMode === "work"
+            ? [
+                {
+                  id: "access",
+                  content: (
+                    <ComposerFooterModeControls
+                      showInteractionModeToggle={false}
+                      interactionMode={interactionMode}
+                      runtimeMode={runtimeMode}
+                      runtimeModeOptions={chatRuntimeModeOptions}
+                      size={composerControlsCollapsed ? "xs" : "sm"}
+                      hidden={composerControlsHidden || restingHiddenBlockCount > 0}
+                      onToggleInteractionMode={toggleInteractionMode}
+                      onRuntimeModeChange={handleRuntimeModeChange}
+                    />
+                  ),
+                },
+              ]
+            : []),
         ];
   const hiddenRestingBlockIds = restingBlockDefs
     .slice(restingBlockDefs.length - restingHiddenBlockCount)
     .map((def) => def.id);
+  // A hidden chat block moves its choices into the overflow menu; a started
+  // chat's pill is a plain label with nothing to move, so it opens no menu.
+  const overflowBlockIds =
+    onChatSubModeChange === undefined
+      ? hiddenRestingBlockIds.filter((id) => id !== "chat-mode")
+      : hiddenRestingBlockIds;
+  const overflowChatSubModeChange = hiddenRestingBlockIds.includes("chat-mode")
+    ? onChatSubModeChange
+    : undefined;
+  const overflowChatAccess = hiddenRestingBlockIds.includes("access");
+  const overflowChatMenuContent =
+    overflowChatSubModeChange !== undefined || overflowChatAccess ? (
+      <>
+        {overflowChatSubModeChange !== undefined && chatSubMode !== undefined ? (
+          <ChatSubModeMenuItems
+            chatSubMode={chatSubMode}
+            onChatSubModeChange={overflowChatSubModeChange}
+          />
+        ) : null}
+        {overflowChatSubModeChange !== undefined && overflowChatAccess ? <MenuSeparator /> : null}
+        {overflowChatAccess ? (
+          <ChatAccessMenuItems
+            runtimeMode={runtimeMode}
+            onRuntimeModeChange={handleRuntimeModeChange}
+          />
+        ) : null}
+      </>
+    ) : null;
   const composerControls = showProviderUnavailable ? (
     <ComposerControl
       type="button"
@@ -5768,11 +5810,11 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
         })}
         <div
           data-resting-controls-overflow
-          aria-hidden={hiddenRestingBlockIds.length === 0 || undefined}
-          inert={hiddenRestingBlockIds.length === 0 || undefined}
+          aria-hidden={overflowBlockIds.length === 0 || undefined}
+          inert={overflowBlockIds.length === 0 || undefined}
           className={cn(
             "min-w-0 shrink-0",
-            hiddenRestingBlockIds.length === 0 && "pointer-events-none invisible absolute",
+            overflowBlockIds.length === 0 && "pointer-events-none invisible absolute",
           )}
         >
           <CompactComposerControlsMenu
@@ -5780,23 +5822,12 @@ export const ChatComposer = memo(function ChatComposer(props: ChatComposerProps)
             runtimeMode={compatibleRuntimeMode}
             runtimeModeOptions={compatibleRuntimeModeOptions}
             size={composerControlsCollapsed ? "xs" : "sm"}
-            hidden={composerControlsHidden || hiddenRestingBlockIds.length === 0}
+            hidden={composerControlsHidden || overflowBlockIds.length === 0}
             showInteractionModeToggle={planModeUiEnabled && hiddenRestingBlockIds.includes("mode")}
             traitsMenuContent={
               hiddenRestingBlockIds.includes("traits") ? providerTraitsMenuContent : undefined
             }
-            // A started Chat chat has no mode choices; its pill is a plain label.
-            chatModeMenuContent={
-              chatSubMode === undefined ? undefined : hiddenRestingBlockIds.includes("chat-mode") &&
-                (onChatSubModeChange !== undefined || chatSubMode === "work") ? (
-                <ChatModeMenuItems
-                  chatSubMode={chatSubMode}
-                  runtimeMode={runtimeMode}
-                  onChatSubModeChange={onChatSubModeChange}
-                  onRuntimeModeChange={handleRuntimeModeChange}
-                />
-              ) : null
-            }
+            chatModeMenuContent={chatSubMode === undefined ? undefined : overflowChatMenuContent}
             onToggleInteractionMode={toggleInteractionMode}
             onRuntimeModeChange={handleRuntimeModeChange}
           />

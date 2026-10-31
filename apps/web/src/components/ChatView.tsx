@@ -442,6 +442,7 @@ import { PullRequestThreadDialog } from "./PullRequestThreadDialog";
 import type { AssistantCitationRequest } from "./chat/AssistantCitationSource";
 import { MessagesTimeline, type MessagesTimelineHistoryControls } from "./chat/MessagesTimeline";
 import { ProviderSubagentBar } from "./chat/ProviderSubagentBar";
+import { ChatThreadDetailsPanel } from "./chat/ChatThreadDetailsPanel";
 import { getTriggerDisplayModelName } from "./chat/providerIconUtils";
 import { resolveTimelineIsAtEnd, worktreeSetupAgentStarted } from "./chat/MessagesTimeline.logic";
 import {
@@ -11131,6 +11132,12 @@ export default function ChatView(props: ChatViewProps) {
       </Suspense>
     ) : null
   ) : null;
+  // A Work chat can delegate tasks. Once a chat has helper agents, or is one, it
+  // shows a thread panel with just them; before that the panel would be empty.
+  const showThreadPanel =
+    !isChatThread ||
+    parentSubagentThreadId !== null ||
+    (serverProjection?.subagents.some((subagent) => subagent.childThreadId !== null) ?? false);
   const threadDetailsPanelProps: ThreadDetailsPanelProps = {
     anchor: threadPanelPopoverAnchorRef,
     handle: threadPanelPopoverHandle,
@@ -11199,6 +11206,8 @@ export default function ChatView(props: ChatViewProps) {
     <PanelLayoutControls
       {...panelToggleControlProps}
       showThreadPanelControl={!inlineRightPanelOwnsTitleBar}
+      showTerminalControl={!isChatThread}
+      showRightPanelControl={!isChatThread}
     />
   );
   const threadPanelHeaderControl = (
@@ -11312,7 +11321,7 @@ export default function ChatView(props: ChatViewProps) {
               className="pointer-events-none fixed top-[var(--workspace-controls-top)] right-[var(--workspace-controls-right)] h-[var(--workspace-topbar-height)] w-28 [-webkit-app-region:no-drag]"
             />
           ) : null}
-          {!isChatThread && !rightPanelControlsAtRoot && !rightPanelControlsInPanel
+          {showThreadPanel && !rightPanelControlsAtRoot && !rightPanelControlsInPanel
             ? panelLayoutControls
             : null}
           {inlineRightPanelOwnsTitleBar ? threadPanelHeaderControl : null}
@@ -11902,7 +11911,11 @@ export default function ChatView(props: ChatViewProps) {
               </AlertDialogPopup>
             </AlertDialog>
 
-            {isChatThread ? null : <ThreadDetailsPanel {...threadDetailsPanelProps} />}
+            {!showThreadPanel ? null : isChatThread ? (
+              <ChatThreadDetailsPanel {...threadDetailsPanelProps} />
+            ) : (
+              <ThreadDetailsPanel {...threadDetailsPanelProps} />
+            )}
 
             {pullRequestDialogState ? (
               <PullRequestThreadDialog
