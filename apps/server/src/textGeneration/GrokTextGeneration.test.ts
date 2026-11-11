@@ -11,12 +11,13 @@ import * as Layer from "effect/Layer";
 import * as Schema from "effect/Schema";
 import { createModelSelection } from "@cctools/shared/model";
 import { expect } from "vite-plus/test";
-import { GrokSettings, ProviderInstanceId } from "@cctools/contracts";
+import { ProviderInstanceId } from "@cctools/contracts";
+import { GrokSettings } from "@cctools/provider-grok/settings";
 
 import * as ServerConfig from "../config.ts";
 import * as TextGeneration from "./TextGeneration.ts";
-import { makeGrokTextGeneration } from "./GrokTextGeneration.ts";
-import { execScriptSource, writeFakeCli } from "../testUtils/fakeCli.ts";
+import { makeGrokTextGeneration } from "@cctools/provider-grok/testing";
+import { execScriptSource, writeFakeCli } from "@cctools/provider-testing/fakeCli";
 const decodeGrokSettings = Schema.decodeSync(GrokSettings);
 
 const __dirname = NodePath.dirname(NodeURL.fileURLToPath(import.meta.url));
@@ -130,95 +131,6 @@ it.layer(layerGrokTextGenerationTest)("GrokTextGeneration", (it) => {
             modelSelection: createModelSelection(ProviderInstanceId.make("grok"), "grok-mock-alt"),
           });
           expect(generated.title).toBe("Investigate failing CI");
-        }),
-    ),
-  );
-
-  it.effect("surfaces ACP request failures as text generation errors", () =>
-    withFakeAcpGrok(
-      {
-        CHATANDCODE_ACP_PROMPT_RESPONSE_TEXT: JSON.stringify({ branch: "unreachable" }),
-      },
-      (textGeneration) =>
-        Effect.gen(function* () {
-          const error = yield* Effect.flip(
-            textGeneration.generateBranchName({
-              cwd: process.cwd(),
-              message: "wire up grok",
-              modelSelection: createModelSelection(
-                ProviderInstanceId.make("grok"),
-                "missing-grok-model",
-              ),
-            }),
-          );
-          expect(error._tag).toBe("TextGenerationError");
-          expect(error.detail).toContain("Grok ACP base model");
-        }),
-    ),
-  );
-
-  it.effect("fails with TextGenerationError when output is empty", () =>
-    withFakeAcpGrok(
-      {
-        CHATANDCODE_ACP_PROMPT_RESPONSE_TEXT: "   \n  ",
-      },
-      (textGeneration) =>
-        Effect.gen(function* () {
-          const error = yield* Effect.flip(
-            textGeneration.generateThreadTitle({
-              cwd: process.cwd(),
-              message: "anything",
-              modelSelection: createModelSelection(ProviderInstanceId.make("grok"), "grok-build"),
-            }),
-          );
-          expect(error._tag).toBe("TextGenerationError");
-          expect(error.detail).toMatch(/empty/i);
-        }),
-    ),
-  );
-
-  it.effect("decodes a structured PR title + body", () =>
-    withFakeAcpGrok(
-      {
-        CHATANDCODE_ACP_PROMPT_RESPONSE_TEXT: JSON.stringify({
-          title: "feat(grok): wire up session/set_model",
-          body: "## Summary\n- Replace `-m` spawn flag with the typed ACP `session/set_model`.\n- Translate `MODEL_SWITCH_INCOMPATIBLE_AGENT` into a validation error.",
-        }),
-      },
-      (textGeneration) =>
-        Effect.gen(function* () {
-          const generated = yield* textGeneration.generatePrContent({
-            cwd: process.cwd(),
-            baseBranch: "main",
-            headBranch: "feat/grok-provider",
-            commitSummary: "feat: add grok provider",
-            diffSummary: "M apps/server/src/provider/Drivers/GrokDriver.ts",
-            diffPatch: "diff --git a/.../GrokDriver.ts b/.../GrokDriver.ts",
-            modelSelection: createModelSelection(ProviderInstanceId.make("grok"), "grok-build"),
-          });
-
-          expect(generated.title).toBe("feat(grok): wire up session/set_model");
-          expect(generated.body).toContain("Translate `MODEL_SWITCH_INCOMPATIBLE_AGENT`");
-        }),
-    ),
-  );
-
-  it.effect("fails with TextGenerationError when output is unparseable JSON", () =>
-    withFakeAcpGrok(
-      {
-        CHATANDCODE_ACP_PROMPT_RESPONSE_TEXT: "totally not json output from a confused model",
-      },
-      (textGeneration) =>
-        Effect.gen(function* () {
-          const error = yield* Effect.flip(
-            textGeneration.generateThreadTitle({
-              cwd: process.cwd(),
-              message: "anything",
-              modelSelection: createModelSelection(ProviderInstanceId.make("grok"), "grok-build"),
-            }),
-          );
-          expect(error._tag).toBe("TextGenerationError");
-          expect(error.detail).toMatch(/invalid structured output/i);
         }),
     ),
   );

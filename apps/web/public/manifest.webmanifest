@@ -1,5 +1,7 @@
 {
   "id": "/",
+  "name": "ChatAndCode",
+  "short_name": "ChatAndCode",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

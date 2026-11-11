@@ -28,6 +28,8 @@ export interface HomeProjectScope {
   readonly representative: EnvironmentProject;
   readonly projects: ReadonlyArray<EnvironmentProject>;
   readonly projectRefs: ReadonlyArray<ScopedProjectRef>;
+  readonly pinned: boolean;
+  readonly archived: boolean;
 }
 
 function getProjectSortTimestamp(
@@ -56,6 +58,7 @@ export function buildHomeProjectScopes(input: {
   );
   return buildProjectGroups({
     projects,
+    groupScratchProjects: true,
     settings: {
       sidebarProjectGroupingMode: input.projectGroupingMode,
       sidebarProjectGroupingOverrides: {},
@@ -67,12 +70,12 @@ export function buildHomeProjectScopes(input: {
       representative: group.representative,
       projects: group.members.map((member) => member.project),
       projectRefs: group.memberProjectRefs,
+      pinned: group.pinned,
+      archived: group.archived,
     };
   });
 }
 
-// Prefers an exact scope key so a caller-supplied project ID that equals another
-// project's normalized workspace root cannot select the wrong group.
 export function findHomeProjectScope(
   scopes: ReadonlyArray<HomeProjectScope>,
   key: string | null,

@@ -58,7 +58,7 @@ export const SidebarSectionSwitch = memo(function SidebarSectionSwitch({
                   data-testid={`sidebar-section-${half.side}`}
                   onClick={() => onSelect(half.side)}
                   className={cn(
-                    "flex h-7 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
+                    "flex h-7 min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 text-sm font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     isSelected
                       ? "bg-sidebar-row-active text-sidebar-foreground shadow-xs"
                       : "text-sidebar-muted-foreground hover:text-sidebar-foreground",

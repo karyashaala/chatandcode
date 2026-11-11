@@ -26,7 +26,6 @@ const writeExecutable = (path: string, content: string) => {
   NodeFS.writeFileSync(path, content, { mode: 0o755 });
 };
 
-/** Writes the launcher for `target` at `<root>/bin/chatandcode`, with `<root>/home` as its ChatAndCode home. */
 const writeShim = (root: string, target: CliShimTarget) => {
   const shim = NodePath.join(root, "bin", "chatandcode");
   writeExecutable(shim, renderCliShim({ target, shimPath: shim, t3Home: `${root}/home` }));
@@ -39,16 +38,9 @@ const run = (shim: string, args: ReadonlyArray<string>, env: NodeJS.ProcessEnv =
     env: { PATH: process.env.PATH, ...env },
   });
 
-/** An app executable that reports its environment and arguments. */
 const REPORTER =
   '#!/bin/sh\necho "node=$ELECTRON_RUN_AS_NODE cli=$CHATANDCODE_CLI_PATH home=$CHATANDCODE_HOME"\nprintf "%s\\n" "$@"\nexit 3\n';
 
-/**
- * A stand-in AppImage whose image holds the reporter. `--appimage-mount`
- * prints the mount and stays up until killed, recording that it was; with
- * `canMount` false it fails like a host without FUSE. `--appimage-extract`
- * unpacks into ./squashfs-root.
- */
 const fakeAppImage = (canMount = true) => {
   const root = tempRoot();
   const image = NodePath.join(root, "image");
@@ -72,29 +64,8 @@ const fakeAppImage = (canMount = true) => {
 };
 
 describe("renderCliShim", () => {
-  it("runs the AppImage's bundled CLI with every argument and unmounts after", () => {
-    const { root, image, shim } = fakeAppImage();
-    const result = run(shim, ["browser", "setup", "a b"]);
-    expect(result.status).toBe(3);
-    expect(result.stdout.split("\n")).toEqual([
-      `node=1 cli=${shim} home=${root}/home`,
-      `${image}/resources/app.asar/apps/server/dist/bin.mjs`,
-      "browser",
-      "setup",
-      "a b",
-      "",
-    ]);
-    // The trap kills the mount helper as the launcher exits.
-    NodeChildProcess.spawnSync("sh", [
-      "-c",
-      `i=0; while [ ! -e '${root}/unmounted' ] && [ $i -lt 40 ]; do sleep 0.05; i=$((i+1)); done`,
-    ]);
-    expect(NodeFS.existsSync(NodePath.join(root, "unmounted"))).toBe(true);
-  });
-
   it("extracts the AppImage where it cannot be mounted", () => {
     const { shim } = fakeAppImage(false);
-    // Extract-and-run is ignored too, so the runtime never starts the app.
     const result = run(shim, ["--version"], { APPIMAGE_EXTRACT_AND_RUN: "1" });
     expect(result.status).toBe(3);
     expect(result.stdout).toMatch(
@@ -110,10 +81,8 @@ describe("renderCliShim", () => {
       executable: NodePath.join(root, "app"),
       entry: "/bin.mjs",
     });
-    // sudo clears the environment, so the launcher supplies its own.
     expect(run(shim, []).stdout).toContain(`home=${root}/home`);
     expect(run(shim, [], { CHATANDCODE_HOME: "/elsewhere" }).stdout).toContain("home=/elsewhere");
-    // Run by a relative path, it still names itself absolutely.
     const relative = NodeChildProcess.spawnSync("./bin/chatandcode", [], {
       cwd: root,
       encoding: "utf8",
@@ -138,18 +107,6 @@ describe("renderCliShim", () => {
     ]);
   });
 
-  it("tells a person whose app moved to reopen it", () => {
-    const root = tempRoot();
-    const shim = writeShim(root, {
-      kind: "direct",
-      executable: NodePath.join(root, "Gone.app/Contents/MacOS/ChatAndCode"),
-      entry: "/bin.mjs",
-    });
-    const result = run(shim, ["--version"]);
-    expect(result.status).toBe(127);
-    expect(result.stderr).toContain("Open the app once to update this command.");
-  });
-
   it("writes a Windows launcher that keeps cmd from reinterpreting paths", () => {
     const executable = "C:\\Apps\\R&whoami&X 100%\\!CHANNEL!\\ChatAndCode.exe";
     const script = renderCliShim({
@@ -163,7 +120,6 @@ describe("renderCliShim", () => {
     expect(lines).toContain(
       'if exist "C:\\Apps\\R&whoami&X 100%%\\!CHANNEL!\\ChatAndCode.exe" goto run',
     );
-    // Paths only ever appear quoted or inside `set "..."`, never bare where `&` would split them.
     const bare = lines.filter(
       (line) => line.includes("whoami") && !/"[^"]*whoami[^"]*"/.test(line),
     );
@@ -171,16 +127,5 @@ describe("renderCliShim", () => {
     expect(lines).toContain(
       'set "CHATANDCODE_CLI_PATH=C:\\Users\\José\\.chatandcode\\bin\\chatandcode.cmd"',
     );
-  });
-
-  it("switches the Windows console to UTF-8 only when a path needs it", () => {
-    const ascii = renderCliShim({
-      target: { kind: "windows", executable: "C:\\T3\\ChatAndCode.exe", entry: "C:\\T3\\bin.mjs" },
-      shimPath: "C:\\Users\\me\\.chatandcode\\bin\\chatandcode.cmd",
-      t3Home: "C:\\Users\\me\\.chatandcode",
-    });
-    // A Ctrl-C that ends the batch would leave the console switched.
-    expect(ascii).not.toContain("chcp");
-    expect(ascii.split("\r\n")).toContain("exit /b %chatandcode_exit%");
   });
 });

@@ -1,9 +1,21 @@
+import {
+  resolveChatsProjectKeys,
+  splitSidebarThreads,
+} from "@cctools/client-runtime/state/projects";
+import type { EnvironmentThreadShell } from "@cctools/client-runtime/state/shell";
+import type { EnvironmentId } from "@cctools/contracts";
+import { useAtomValue } from "@effect/atom-react";
 import { Pressable, View } from "react-native";
 
-import { AppText as Text } from "../../components/AppText";
+import { AppText as Text } from "../../components/ui/AppText";
 import { cn } from "../../lib/cn";
-import type { HomeSectionSummary } from "../threads/threadListV2";
-import type { HomeListSection } from "./home-list-options";
+import { uuidv4 } from "../../lib/uuid";
+import { useNavigationThreadShells, useProjects, useServerConfigs } from "../../state/entities";
+import { threadListEnvironmentsAtom } from "../../state/presentation";
+import { useSavedRemoteConnections } from "../../state/use-remote-environment-registry";
+import { resolveHomeSectionSummary, type HomeSectionSummary } from "../threads/threadListV2";
+import { useSelectWorkspaceDetail } from "../workspace/useSelectWorkspaceDetail";
+import { useHomeListOptions, useHomeListSection, type HomeListSection } from "./home-list-options";
 
 /**
  * Attention dots read as the side they belong to: a chat waiting on you is
@@ -90,4 +102,57 @@ export function HomeSectionTabs(props: {
       />
     </View>
   );
+}
+
+/** Tab counts follow the list's environment filter; chats have no project scope. */
+export function useHomeSectionSummary(input: {
+  readonly threads: ReadonlyArray<EnvironmentThreadShell>;
+  readonly chatsProjectKeys: ReadonlySet<string>;
+  readonly selectedEnvironmentId: EnvironmentId | null;
+}) {
+  const { section } = useHomeListSection();
+  const { settlementEnvironmentIds } = useAtomValue(threadListEnvironmentsAtom);
+  const { chatThreads, codeThreads } = splitSidebarThreads(
+    input.threads.filter(
+      (thread) =>
+        input.selectedEnvironmentId === null ||
+        thread.environmentId === input.selectedEnvironmentId,
+    ),
+    input.chatsProjectKeys,
+  );
+  return resolveHomeSectionSummary({ section, chatThreads, codeThreads, settlementEnvironmentIds });
+}
+
+/** Home's Chat / Code tabs for a header that sits outside the thread list (the iOS workspace title). */
+export function WorkspaceHomeSectionTabs() {
+  const { section, setSection } = useHomeListSection();
+  const projects = useProjects();
+  const serverConfigs = useServerConfigs();
+  const threads = useNavigationThreadShells();
+  const { savedConnectionsById } = useSavedRemoteConnections();
+  const { options } = useHomeListOptions(
+    new Set(Object.values(savedConnectionsById).map((connection) => connection.environmentId)),
+  );
+  const summary = useHomeSectionSummary({
+    threads,
+    chatsProjectKeys: resolveChatsProjectKeys(projects, serverConfigs),
+    selectedEnvironmentId: options.selectedEnvironmentId,
+  });
+  return (
+    <HomeSectionTabs
+      section={section}
+      chat={summary.chat}
+      code={summary.code}
+      onSelect={setSection}
+    />
+  );
+}
+
+/** On the Chat tab, Home's compose buttons start a chat instead of a task. */
+export function useStartNewThread(startNewTask: () => void) {
+  const { section } = useHomeListSection();
+  const selectDetail = useSelectWorkspaceDetail();
+  return section === "chat"
+    ? () => selectDetail({ name: "Thread", params: { draft: { requestId: uuidv4(), chat: "1" } } })
+    : startNewTask;
 }

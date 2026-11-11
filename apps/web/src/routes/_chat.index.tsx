@@ -1,13 +1,13 @@
+import { workspaceAreaProps } from "../lib/workspaceFocus";
 import { RefreshIcon } from "~/components/ui/refresh-icon";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { LinkIcon, PlusIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
-import { isLocalEnvironmentDisabled } from "../localEnvironment";
 import { isElectron } from "../env";
 import { NoProjectsHero } from "../components/NoProjectsHero";
 import { resolveChatsProjectKeys } from "@cctools/client-runtime/state/projects";
 import { Button } from "../components/ui/button";
+import { HostedEmptyState } from "../components/HostedEmptyState";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "../components/ui/empty";
 import { SidebarInset } from "../components/ui/sidebar";
 import { WorkspacePageHeader } from "../components/WorkspacePageHeader";
@@ -20,8 +20,6 @@ import {
 } from "../state/entities";
 import { useEnvironments } from "../state/environments";
 import { useUiStateStore } from "../uiStateStore";
-import { APP_DISPLAY_NAME } from "~/branding";
-import { hasCloudPublicConfig } from "~/cloud/publicConfig";
 
 function ChatIndexRouteView() {
   const { authGateState } = Route.useRouteContext();
@@ -29,7 +27,7 @@ function ChatIndexRouteView() {
 
   if (authGateState.status === "hosted-static") {
     if (!isReady) return null;
-    if (environments.length === 0) return <HostedStaticOnboardingState />;
+    if (environments.length === 0) return <HostedEmptyState />;
   }
 
   return <IndexDraftLanding />;
@@ -61,32 +59,41 @@ function IndexDraftLanding() {
         entry.serverConfig?.chatsWorkspaceRoot != null,
     );
   const navigateSidebarSide = useSidebarSectionNavigation();
-  const startingRef = useRef(false);
+  const router = useRouter();
+  // Read at effect time; this page can stay mounted while the router is already navigating away.
+  const isStillOnIndex = useEffectEvent(() => router.state.location.pathname === "/");
+  const startedAttemptRef = useRef<number | null>(null);
   const [startState, setStartState] = useState({ failed: false, retryRequest: 0 });
 
-  const hasCodeProject = useMemo(() => {
-    const chatsProjectKeys = resolveChatsProjectKeys(projects, serverConfigs);
-    return projects.some(
-      (project) => !chatsProjectKeys.has(`${project.environmentId}:${project.id}`),
-    );
-  }, [projects, serverConfigs]);
+  const chatsProjectKeys = resolveChatsProjectKeys(projects, serverConfigs);
+  // An archived project does not count, like upstream's most-recent-project landing.
+  const hasCodeProject = projects.some(
+    (project) =>
+      project.archivedAt == null && !chatsProjectKeys.has(`${project.environmentId}:${project.id}`),
+  );
   const canLand = side === "chat" || hasCodeProject;
+  const attempt = startState.retryRequest;
 
+  // oxlint-disable-next-line chatandcode/no-unreasoned-state-sync -- starts a draft thread in the most recent project and navigates to it while still on the index
   useEffect(() => {
-    if (!bootstrapped || awaitingChats || !canLand || startingRef.current) {
+    // Starting after the user has left would replace the page they picked.
+    if (
+      !bootstrapped ||
+      awaitingChats ||
+      !canLand ||
+      startedAttemptRef.current === attempt ||
+      !isStillOnIndex()
+    ) {
       return;
     }
-    startingRef.current = true;
-    const fail = () => {
-      startingRef.current = false;
-      setStartState((state) => ({ ...state, failed: true }));
-    };
+    startedAttemptRef.current = attempt;
+    const fail = () => setStartState((state) => ({ ...state, failed: true }));
     void navigateSidebarSide(side, { startup: true })
       .then((landed) => {
         if (!landed) fail();
       })
       .catch(fail);
-  }, [awaitingChats, bootstrapped, canLand, navigateSidebarSide, side, startState.retryRequest]);
+  }, [attempt, awaitingChats, bootstrapped, canLand, navigateSidebarSide, side]);
 
   if (!bootstrapped || awaitingChats) {
     return null;
@@ -103,14 +110,17 @@ function IndexDraftLanding() {
       />
     ) : null;
   }
-  // First-run routing to the welcome wizard happens in FirstRunGate at the
-  // root, before this route ever renders.
   return <NoProjectsHero />;
 }
 
 function DraftStartError({ onRetry }: { readonly onRetry: () => void }) {
+  const contentArea = workspaceAreaProps("home", 1, "Home");
   return (
-    <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none">
+    <SidebarInset
+      {...contentArea}
+      role="main"
+      className="h-dvh min-h-0 overflow-hidden overscroll-y-none"
+    >
       {isElectron ? <WorkspacePageHeader electron /> : null}
       <Empty className="flex-1">
         <EmptyHeader className="max-w-md">
@@ -133,49 +143,3 @@ function DraftStartError({ onRetry }: { readonly onRetry: () => void }) {
 export const Route = createFileRoute("/_chat/")({
   component: ChatIndexRouteView,
 });
-
-function HostedStaticOnboardingState() {
-  const cloudEnabled = hasCloudPublicConfig();
-  const localEnvironmentOff = isLocalEnvironmentDisabled();
-  const description = localEnvironmentOff
-    ? "The local environment is turned off. Connect a remote environment, or turn the local environment back on in Connections."
-    : cloudEnabled
-      ? "Enable ChatAndCode Connect on that machine, then open Connections here to sign in with the same account. You can also add the machine using a pairing link."
-      : "Open Connections and add that machine using its pairing link. This app must be able to reach it.";
-
-  return (
-    <SidebarInset className="h-dvh min-h-0 overflow-hidden overscroll-y-none">
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden bg-background">
-        <WorkspacePageHeader electron={isElectron} className="border-b border-border">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-foreground md:text-muted-foreground/60">
-              {APP_DISPLAY_NAME}
-            </span>
-          </div>
-        </WorkspacePageHeader>
-
-        <Empty className="flex-1">
-          <div className="w-full max-w-xl rounded-3xl border border-border/55 bg-card/20 px-8 py-12 shadow-sm/5">
-            <EmptyHeader className="max-w-none">
-              <div className="mx-auto mb-5 flex size-11 items-center justify-center rounded-xl border border-border/70 bg-background/70 text-muted-foreground">
-                <LinkIcon className="size-5" />
-              </div>
-              <EmptyTitle>Connect to a computer running ChatAndCode</EmptyTitle>
-              <EmptyDescription>
-                This app connects to ChatAndCode running on your computer or a server. Start the
-                ChatAndCode desktop app or command-line server on that machine and keep it running.
-              </EmptyDescription>
-              <EmptyDescription>{description}</EmptyDescription>
-              <div className="mt-6 flex justify-center">
-                <Button render={<Link to="/settings/connections" />} size="sm">
-                  <PlusIcon className="size-4" />
-                  Open Connections
-                </Button>
-              </div>
-            </EmptyHeader>
-          </div>
-        </Empty>
-      </div>
-    </SidebarInset>
-  );
-}

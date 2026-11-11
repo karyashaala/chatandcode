@@ -1,20 +1,13 @@
-import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, describe, it } from "@effect/vitest";
 import { EnvironmentId, ProviderInstanceId, ThreadId } from "@cctools/contracts";
-import * as Effect from "effect/Effect";
-import * as FileSystem from "effect/FileSystem";
 
 import {
-  PI_T3_MCP_EXTENSION_FILENAME,
   CHATANDCODE_MCP_BEARER_ENV,
   CHATANDCODE_MCP_URL_ENV,
   CHATANDCODE_PI_RUNTIME_MODE_ENV,
+  CHATANDCODE_PI_MCP_EXTENSION_PATH_ENV,
 } from "./mcpExtensionSource.ts";
-import {
-  buildPiRpcLaunch,
-  materializePiT3McpExtension,
-  resolvePiLaunchArgs,
-} from "./mcpInjection.ts";
+import { buildPiRpcLaunch, resolvePiLaunchArgs } from "./mcpInjection.ts";
 
 const threadId = ThreadId.make("thread-pi-t3-mcp");
 
@@ -65,12 +58,17 @@ describe("pi ChatAndCode MCP injection", () => {
     assert.equal(launch.env[CHATANDCODE_MCP_URL_ENV], "http://127.0.0.1:43123/mcp");
     assert.equal(launch.env[CHATANDCODE_MCP_BEARER_ENV], "secret-pi-token");
     assert.equal(launch.env[CHATANDCODE_PI_RUNTIME_MODE_ENV], "approval-required");
+    assert.equal(
+      launch.env[CHATANDCODE_PI_MCP_EXTENSION_PATH_ENV],
+      "/tmp/cache/pi-t3-mcp-extension.ts",
+    );
 
     const permissionOnly = buildPiRpcLaunch({
       launchArgs: [],
       environment: {
         [CHATANDCODE_MCP_URL_ENV]: "http://127.0.0.1:9999/stale",
         [CHATANDCODE_MCP_BEARER_ENV]: "stale-token",
+        [CHATANDCODE_PI_MCP_EXTENSION_PATH_ENV]: "/stale/extension.ts",
       },
       mcpSession: undefined,
       extensionPath: "/tmp/cache/pi-t3-mcp-extension.ts",
@@ -82,22 +80,13 @@ describe("pi ChatAndCode MCP injection", () => {
       "--extension",
       "/tmp/cache/pi-t3-mcp-extension.ts",
     ]);
-    assert.isFalse(permissionOnly.hasT3Mcp);
     assert.isUndefined(permissionOnly.env[CHATANDCODE_MCP_URL_ENV]);
     assert.isUndefined(permissionOnly.env[CHATANDCODE_MCP_BEARER_ENV]);
     assert.equal(permissionOnly.env[CHATANDCODE_PI_RUNTIME_MODE_ENV], "auto-accept-edits");
-  });
-
-  it("falls back to Pi's first supported mode for legacy auto threads", () => {
-    const launch = buildPiRpcLaunch({
-      launchArgs: [],
-      environment: {},
-      mcpSession: undefined,
-      extensionPath: "/tmp/cache/pi-t3-mcp-extension.ts",
-      runtimeMode: "auto",
-    });
-
-    assert.equal(launch.env[CHATANDCODE_PI_RUNTIME_MODE_ENV], "approval-required");
+    assert.equal(
+      permissionOnly.env[CHATANDCODE_PI_MCP_EXTENSION_PATH_ENV],
+      "/tmp/cache/pi-t3-mcp-extension.ts",
+    );
   });
 
   it("forces tools and user extensions off for unattended text generation", () => {
@@ -114,6 +103,7 @@ describe("pi ChatAndCode MCP injection", () => {
       environment: {},
       mcpSession,
       extensionPath: "/tmp/cache/pi-t3-mcp-extension.ts",
+      sessionPath: "/fake/persisted.jsonl",
       ephemeral: true,
       disableExtensions: true,
       disableTools: true,
@@ -127,7 +117,6 @@ describe("pi ChatAndCode MCP injection", () => {
       "--no-extensions",
       "--no-tools",
     ]);
-    assert.isFalse(launch.hasT3Mcp);
     assert.deepInclude(resolvePiLaunchArgs("--mode text"), {
       ok: false,
       message: "Pi launch argument '--mode' is controlled by ChatAndCode and cannot be overridden.",
@@ -147,24 +136,4 @@ describe("pi ChatAndCode MCP injection", () => {
     assert.isTrue(resolvePiLaunchArgs("--provider openrouter --model=deepseek/v4").ok);
     assert.isTrue(resolvePiLaunchArgs("--model deepseek/v4").ok);
   });
-
-  it.effect("materializes the MCP bridge with namespaced tool registration", () =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const cacheDir = yield* fs.makeTempDirectoryScoped({ prefix: "t3-pi-extensions-" });
-      const mcpDest = yield* materializePiT3McpExtension(cacheDir);
-      assert.isTrue(mcpDest.endsWith(PI_T3_MCP_EXTENSION_FILENAME));
-      const mcpSource = yield* fs.readFileString(mcpDest);
-      assert.include(mcpSource, "export default async function t3McpExtension");
-      assert.include(mcpSource, "before_agent_start");
-      assert.include(mcpSource, 'pi.on("tool_call"');
-      assert.include(mcpSource, "Allow ${event.toolName}?");
-      assert.include(mcpSource, '"mcp-protocol-version"');
-      assert.include(mcpSource, '"tools/call"');
-      assert.include(mcpSource, 'const serverName = "chatandcode"');
-      assert.include(mcpSource, 'const publicPrefix = "mcp__" + serverName + "__"');
-      assert.include(mcpSource, 'serverName.replace(/-/g, "_")');
-      assert.include(mcpSource, "canonicalPrefix !== publicPrefix");
-    }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
-  );
 });

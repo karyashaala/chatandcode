@@ -10,7 +10,7 @@ whether a turn runs. This page lists the decisions and evidence a new driver nee
 - **ACP agents** start as [ACP Registry](../user/providers-acp.md) entries, which follow the ACP
   spec with no per-agent handling. An agent gets a dedicated driver only when it needs behavior the
   spec does not cover, and then it is a small flavor over the
-  [shared ACP adapter](../../apps/server/src/orchestration-v2/Adapters/AcpAdapterV2.ts), like Grok
+  [shared ACP adapter](../../packages/provider-acp/src/server/adapter.ts), like Grok
   and Antigravity. Never add agent-id checks to the generic registry adapter.
 - **Other protocols** get a native adapter that implements
   [`ProviderAdapterV2`](../../packages/provider-core/src/server/ProviderAdapter.ts), like Codex,
@@ -26,9 +26,9 @@ capabilities, never the driver kind.
   falls back, for example to portable context handoff for forks. A capability left on that fails
   at runtime is a bug.
 - **Permission modes.** Offer only modes the provider enforces natively, through
-  `supportedRuntimeModes` in the provider presentation ([Grok](../../apps/server/src/provider/GrokProvider.ts)
+  `supportedRuntimeModes` in the provider presentation ([Grok](../../packages/provider-grok/src/server/status.ts)
   and [Pi](../../packages/provider-pi/src/server/status.ts) are examples). Do not imitate a missing
-  mode by answering approvals in T3: ChatAndCode's check is weaker than the agent's own enforcement. The
+  mode by answering approvals in ChatAndCode: ChatAndCode's check is weaker than the agent's own enforcement. The
   server runs an unoffered stored mode as Supervised
   ([`RuntimePolicy.ts`](../../apps/server/src/orchestration-v2/RuntimePolicy.ts)).
 - **Approval and question options.** Pass the provider's own option IDs through unchanged. Every
@@ -46,7 +46,7 @@ capabilities, never the driver kind.
 - **ChatAndCode MCP tools.** Inject the thread's MCP server so agents can use ChatAndCode's tools, and make a turn
   survive when that server is unreachable.
 - **Updates.** Run an update only through the installer that provably owns the binary; otherwise
-  leave it manual. See [`providerMaintenance.ts`](../../apps/server/src/provider/providerMaintenance.ts).
+  leave it manual. See [`providerMaintenanceRunner.ts`](../../apps/server/src/provider/providerMaintenanceRunner.ts).
 
 ## Tests
 
@@ -86,7 +86,7 @@ produce catches them.
   sending.
 - **Work the provider starts on its own.** Background commands, subagents, workflows, and goals can
   finish or start a turn after ChatAndCode's turn settled. Offer a continuation through
-  [`ProviderContinuationRequests`](../../packages/provider-core/src/server/continuationRequests.ts)
+  [`ProviderContinuationRequests`](../../packages/provider-core/src/server/ProviderContinuationRequests.ts)
   so the parent wakes, and report `hasPendingBackgroundWork` so the session is not released as
   idle. Dropping it, or killing the session, loses the result.
 - **Subagents outlive the run that launched them.** A child can report after its parent's turn
@@ -110,15 +110,15 @@ A provider lives in its own `packages/provider-<name>` package, with
 - **Package exports.** `./settings` holds the instance settings schema, built with
   `makeProviderSettingsSchema` from contracts. `./client` exports a `ProviderClientDefinition`
   (label, settings schema, plain-data icon, badge) and must stay browser- and React Native-safe.
-  `./server` exports the `ProviderDriver` and its adapter driver. Settings live in
-  `providerInstances`; new providers are off by default.
+  `./server` exports the `ProviderDriver` and its adapter driver. `./testing` exposes internals
+  the server's replay testkits drive; testkits that need the orchestrator stay in the server.
+  Settings live in `providerInstances`; new providers are off by default.
 - **Package boundaries.** Server code imports only `@cctools/provider-core/server/*`, contracts,
   and shared. It reaches the server through `ProviderHost` (paths, settings, background demand,
-  attachments), never through `apps/server`. Tests use `@cctools/provider-testing`.
+  attachments, stored credentials), never through `apps/server`. Tests use `@cctools/provider-testing`.
 - **Server registration:** the driver's entry in
-  [`builtInDrivers.ts`](../../apps/server/src/provider/builtInDrivers.ts) and the adapter driver's in
-  [`builtInProviderAdapterDrivers.ts`](../../apps/server/src/orchestration-v2/builtInProviderAdapterDrivers.ts).
-  Also its position in the [status order](../../apps/server/src/provider/providerStatusCache.ts), a
+  [`builtInDrivers.ts`](../../apps/server/src/provider/builtInDrivers.ts). The driver carries its
+  adapter driver. Also its position in the [status order](../../apps/server/src/provider/providerStatusCache.ts), a
   compatibility policy in [`model-manifest.json`](../../apps/server/src/provider/model-manifest.json)
   (bump `updatedAt`; see [model manifest](./model-manifest.md)), and its default model in contracts.
 - **Client registration:** the client definition in the web and mobile provider registries, and

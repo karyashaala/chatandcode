@@ -1,3 +1,7 @@
+import {
+  getPromptControlledTraits,
+  getTraitSelectChange,
+} from "@cctools/client-runtime/model-traits";
 import type { ProviderOptionDescriptor } from "@cctools/contracts";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -23,20 +27,41 @@ const effortDescriptor: Extract<ProviderOptionDescriptor, { type: "select" }> = 
 };
 
 describe("selectableChoices", () => {
-  it("hides prompt-injected and workflow-trigger choices, keeping declared order", () => {
+  // regression: #21406 bring model controls in line with web
+  it("leaves out prompt-injected choices and keeps workflow choices in declared order", () => {
     expect(selectableChoices(effortDescriptor).map((choice) => choice.id)).toEqual([
       "low",
       "medium",
       "high",
+      "ultracode",
     ]);
   });
 });
 
-describe("runtimeModeChoicesForSupportedModes", () => {
-  it("keeps controls usable when forward-compatible decoding removes every advertised mode", () => {
-    expect(runtimeModeChoicesForSupportedModes([])).toHaveLength(4);
+describe("prompt-controlled reasoning", () => {
+  it("removes the prefix when choosing a regular effort and saves Ultracode as an option", () => {
+    const descriptors = [effortDescriptor];
+    const prompt = "Ultrathink:\nsolve it";
+    expect(
+      getTraitSelectChange(
+        { ...getPromptControlledTraits(descriptors, prompt), descriptors },
+        effortDescriptor,
+        prompt,
+        "ultracode",
+      ),
+    ).toEqual({ prompt: "solve it", modelOptions: [{ id: "effort", value: "ultracode" }] });
   });
 
+  it("keeps body-controlled Ultrathink locked", () => {
+    const descriptors = [effortDescriptor];
+    const prompt = "please ultrathink about this";
+    const selected = { ...getPromptControlledTraits(descriptors, prompt), descriptors };
+    expect(selected.ultrathinkInBodyText).toBe(true);
+    expect(getTraitSelectChange(selected, effortDescriptor, prompt, "low")).toBeNull();
+  });
+});
+
+describe("runtimeModeChoicesForSupportedModes", () => {
   it("offers no choices to a Chat draft despite advertised modes", () => {
     expect(
       runtimeModeChoicesForSupportedModes(["approval-required", "full-access"], "chat"),

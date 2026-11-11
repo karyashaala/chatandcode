@@ -1,13 +1,11 @@
-import {
-  ProviderDriverKind,
-  ProviderInstanceId,
-  type ProviderInstanceEnvironment,
-} from "@cctools/contracts";
+import { ProviderDriverKind, ProviderInstanceId } from "@cctools/contracts";
+import type { ProviderDriverCreateInput } from "./driver.ts";
+export type { ProviderDriverCreateInput as ProviderAdapterDriverCreateInput } from "./driver.ts";
 import * as Schema from "effect/Schema";
 import type * as Effect from "effect/Effect";
 import type * as Scope from "effect/Scope";
 
-import type { ProviderAdapterV2Shape } from "@cctools/provider-core/server/ProviderAdapter";
+import type * as ProviderAdapter from "@cctools/provider-core/server/ProviderAdapter";
 
 export class ProviderAdapterDriverCreateError extends Schema.TaggedError<ProviderAdapterDriverCreateError>()(
   "ProviderAdapterDriverCreateError",
@@ -23,22 +21,17 @@ export class ProviderAdapterDriverCreateError extends Schema.TaggedError<Provide
   }
 }
 
-export interface ProviderAdapterDriverCreateInput<Config> {
-  readonly instanceId: ProviderInstanceId;
-  readonly displayName: string | undefined;
-  readonly accentColor?: string | undefined;
-  readonly environment: ProviderInstanceEnvironment;
-  readonly enabled: boolean;
-  readonly config: Config;
-}
-
 export interface ProviderAdapterDriver<Config, R = never> {
   readonly driverKind: ProviderDriverKind;
   readonly configSchema: Schema.Codec<Config, unknown>;
   readonly defaultConfig: () => Config;
   readonly create: (
-    input: ProviderAdapterDriverCreateInput<Config>,
-  ) => Effect.Effect<ProviderAdapterV2Shape, ProviderAdapterDriverCreateError, R | Scope.Scope>;
+    input: ProviderDriverCreateInput<Config>,
+  ) => Effect.Effect<
+    ProviderAdapter.ProviderAdapterV2["Service"],
+    ProviderAdapterDriverCreateError,
+    R | Scope.Scope
+  >;
 }
 
 export type AnyProviderAdapterDriver<R = never> = ProviderAdapterDriver<any, R>;

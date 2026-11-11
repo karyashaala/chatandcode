@@ -6,9 +6,10 @@ import {
 import type { EnvironmentProject } from "@cctools/client-runtime/state/shell";
 import { useNavigation } from "@react-navigation/native";
 import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, View } from "react-native";
+import { ActivityIndicator, View } from "react-native";
 
-import { AppText as Text } from "../../components/AppText";
+import { AppText as Text } from "../../components/ui/AppText";
+import * as Dialog from "../../components/ui/Dialog";
 import { NativeStackScreenOptions } from "../../native/StackHeader";
 import { useServerConfigs } from "../../state/entities";
 import { projectEnvironment } from "../../state/projects";
@@ -16,6 +17,7 @@ import { useAtomCommand } from "../../state/use-atom-command";
 import { useRemoteConnectionStatus } from "../../state/use-remote-environment-registry";
 import { useNewTaskFlow } from "./new-task-flow-provider";
 import { NewTaskDraftScreen } from "./NewTaskDraftScreen";
+import { ThreadScreenFallback } from "./ThreadScreenHost";
 
 /**
  * Home's Chat-tab compose entry. Opens the machine's Chats project (creating it
@@ -44,6 +46,7 @@ export function NewChatDraftScreen() {
   const startedRef = useRef(false);
   const mountedRef = useRef(true);
 
+  // oxlint-disable-next-line chatandcode/no-unreasoned-state-sync -- tracks mount so a late openChats result never navigates a screen that already closed
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -51,6 +54,7 @@ export function NewChatDraftScreen() {
     };
   }, []);
 
+  // oxlint-disable-next-line chatandcode/no-unreasoned-state-sync -- opens (or creates) the Chats project on the server once a machine that offers chats is connected
   useEffect(() => {
     if (environmentId === null || startedRef.current) return;
     startedRef.current = true;
@@ -59,7 +63,7 @@ export function NewChatDraftScreen() {
       if (result._tag === "Failure") {
         if (!isAtomCommandInterrupted(result)) {
           const error = squashAtomCommandFailure(result);
-          Alert.alert(
+          Dialog.alert(
             "Could not start a chat",
             error instanceof Error ? error.message : "The Chats folder could not be created.",
           );
@@ -72,21 +76,24 @@ export function NewChatDraftScreen() {
   }, [environmentId, navigation, openChats]);
   // Applied from a render after the open, so the flow's current setProject
   // moves the draft it already bound to the Chats project.
+  // oxlint-disable-next-line chatandcode/no-unreasoned-state-sync -- binds the new-task flow store's draft to the Chats project once the server returns it
   useEffect(() => {
     if (chatsProject !== null) setProject(chatsProject);
   }, [chatsProject, setProject]);
 
   if (chatsProject !== null && isChatsDraft) return <NewTaskDraftScreen />;
   return (
-    <View className="flex-1 items-center justify-center gap-3 bg-screen px-8">
+    <ThreadScreenFallback>
       <NativeStackScreenOptions options={{ title: "New chat" }} />
-      {environmentId === null ? (
-        <Text className="text-center text-foreground-muted">
-          Connect to a machine that offers chats to start one.
-        </Text>
-      ) : (
-        <ActivityIndicator colorClassName="accent-icon-muted" />
-      )}
-    </View>
+      <View className="flex-1 items-center justify-center gap-3 bg-screen px-8">
+        {environmentId === null ? (
+          <Text className="text-center text-foreground-muted">
+            Connect to a machine that offers chats to start one.
+          </Text>
+        ) : (
+          <ActivityIndicator colorClassName="accent-icon-muted" />
+        )}
+      </View>
+    </ThreadScreenFallback>
   );
 }

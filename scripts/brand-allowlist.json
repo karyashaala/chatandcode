@@ -415,6 +415,12 @@
     "ticket": "RB13"
   },
   {
+    "path": "apps/server/src/cloud/http.test.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
+    "ticket": "RB13"
+  },
+  {
     "path": "apps/server/src/cloud/http.ts",
     "pattern": "t\u0033-env:",
     "reason": "The server signs this JWT issuer/audience prefix and the deployed relay verifies it.",
@@ -895,7 +901,7 @@
     "ticket": "RF03"
   },
   {
-    "path": "{apps/server/src/provider/CursorAuth.ts,apps/server/src/provider/ProviderAuthFlow.test.ts,apps/server/src/provider/ProviderAuthService.test.ts,apps/server/src/provider/ProviderCredentialStore.ts}",
+    "path": "{apps/server/src/provider/CursorAuth.ts,apps/server/src/provider/ProviderAuthFlow.test.ts,apps/server/src/provider/ProviderAuthService.test.ts,apps/server/src/provider/ProviderCredentialStore.ts,packages/provider-cursor/src/server/auth.ts,packages/provider-core/src/server/providerAuthFlow.test.ts,packages/provider-core/src/server/ProviderHost.ts,packages/provider-testing/src/TestProviderHost.ts}",
     "pattern": "\"t\u0033\"",
     "reason": "Credential ownership discriminator is a persisted/contract value deferred to RF13 (RF03).",
     "ticket": "RF03"
@@ -997,7 +1003,7 @@
     "ticket": "RF03"
   },
   {
-    "path": "packages/shared/src/threadPullRequests.test.ts",
+    "path": "{packages/shared/src/threadPullRequests.test.ts,packages/client-runtime/src/threadPullRequests.test.ts}",
     "pattern": "pingdotgg/t\u0033code|t\u0033code|T\u0033code",
     "reason": "Arbitrary parser, path, repository and telemetry fixtures are retained upstream inputs rather than product branding (RF03).",
     "ticket": "RF03"
@@ -1349,5 +1355,53 @@
     "pattern": "^(?:      \"name\": \"T\u0033 Code\",|      \"sourceUrl\": \"https://github\\.com/pingdotgg/t\u0033code\",|          \"preamble\": \\[\"ChatAndCode is a fork of T\u0033 Code\\.\"\\])$",
     "reason": "attribution to upstream T\u0033 Code",
     "ticket": "PB1"
+  },
+  {
+    "path": "apps/mobile/modules/{t\u0033-highlights,t\u0033-source-text}/**",
+    "pattern": "com\\.t\u0033tools\\.highlights|https://t\u0033tools\\.com",
+    "reason": "Native modules upstream added in the 2026-10-30 merge keep their Android group and podspec homepage like the existing native modules (RB16, RF03); renaming needs a coordinated native rebuild.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "{apps/mobile/src/features/prompt-links/prompt-link-model.test.ts,apps/mobile/src/features/pull-requests/pullRequestEnvironmentFallback.test.ts,apps/mobile/src/features/settings/components/BranchNamingSettings.test.tsx,apps/server/src/provider/Drivers/codexUsage.test.ts,apps/web/src/components/CommandPalette.logic.test.ts,packages/client-runtime/src/changeRequestLinks.test.ts,packages/client-runtime/src/sourceControlClients.test.ts,packages/source-control-azure-devops/src/shared/definition.test.ts,packages/source-control-gitlab/src/shared/definition.test.ts}",
+    "pattern": "\"t\u0033\"|t\u0033tools",
+    "reason": "Arbitrary repository, organization, project, branch-prefix and provider fixtures in tests upstream added or moved in the 2026-10-30 merge are parser inputs, not product copy (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/src/lib/mobileTheme.ts,apps/mobile/src/lib/mobileTheme.test-support.ts,apps/mobile/src/components/ui/segmentedControlColors.ts,apps/mobile/src/features/showcase/showcaseCaptureModel.test.ts,apps/mobile/src/lib/composerChipPresentation.test.ts,apps/web/src/components/clerk/T\u0033ConnectAccountPages.tsx,apps/web/src/components/cloud/ConnectOnboardingDialog.tsx,apps/web/src/components/settings/SavedEnvironmentRows.tsx}",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])|T\u0033_CHAT_THEME[A-Z_]*|\"t\u0033-code\"",
+    "reason": "Persisted theme IDs, the T\u0033 Chat palette symbol and the T\u0033 Chat account page id name an existing palette or another product, as in themePalettes.ts (RF03); the 2026-10-30 merge brought them into these files.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/web/src/components/chat/TimelineToolActivityIcon.tsx,apps/web/src/components/chat/TimelineWorkEntryRow.logic.ts}",
+    "pattern": "\"t\u0033-code\"",
+    "reason": "MCP icon contract token shared with packages/shared/src/t\u0033McpToolPresentation.ts, retained until RF13 (RF03); these files arrived in the 2026-10-30 merge.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/scheduledTasks/webhookTemplate.ts,packages/shared/src/paletteSearch.ts}",
+    "pattern": "x-t\u0033-relay-\\.\\*|t\u0033code|t\u0033 connect",
+    "reason": "Relay delivery header names are a protocol value the relay still sends (x-t\u0033-relay-*), and the palette search keeps upstream's legacy t\u0033code/ worktree branch prefix and its example tokens (RF00 rule 6); both arrived in the 2026-10-30 merge.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/src/scheduledTasks/webhookTemplate.test.ts,apps/server/src/orchestration-v2/testkit/fixtures/tool_call_restricted_granular/codex_output.ts,evals/mcp-tool-use/run.ts}",
+    "pattern": "x-t\u0033-relay-delivery|/home/replay-user/t\u0033code/|\\.\\.\\.t\u0033\\b",
+    "reason": "Values the fork must match after the 2026-10-30 merge: the relay still sends x-t\u0033-relay-* headers, the Codex replay recording ran in upstream's t\u0033code checkout, and the eval runner spreads its local `t\u0033` tool list, which the brand fixer once rewrote and broke.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{packages/client-runtime/src/linkRequest.test.ts,packages/client-runtime/src/promptLinks.test.ts,packages/client-runtime/src/sourceControlClients.test.ts,packages/shared/src/paletteSearch.test.ts,packages/shared/src/promptLinks.test.ts}",
+    "pattern": "pingdotgg/t\u0033code|t\u0033tools/t\u0033code|t\u0033tools|t\u0033code|T\u0033Code|T\u0033 Code|T\u0033 Connect|t\u0033 connect|\\.t\u0033\\b",
+    "reason": "Upstream test files added in the 2026-10-30 merge keep their repository, title, search and path fixtures as upstream wrote them; renaming them broke the fixtures' agreement with each other (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/server/src/mcp/toolkits/pullRequests/handlers.test.ts",
+    "pattern": "pingdotgg/t\u0033code|T\u0033Tools/T\u0033Code|T\u0033Code|t\u0033code",
+    "reason": "Repository and pull request URL fixtures in upstream's pull request tool tests are parser inputs; the 2026-10-30 merge restored them as upstream wrote them (RF03).",
+    "ticket": "RF03"
   }
 ]

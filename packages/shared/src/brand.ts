@@ -39,7 +39,7 @@ export function desktopIdentity(stage: "dev" | "nightly" | "latest") {
   const scheme = stageScheme(brandStage);
   return {
     baseName: BRAND.productName,
-    stageLabel: stage === "dev" ? "Dev" : stage === "nightly" ? "Nightly" : "Alpha",
+    stageLabel: stage === "dev" ? "Dev" : stage === "nightly" ? "Nightly" : "Beta",
     appId,
     appUserModelId: appId,
     scheme,

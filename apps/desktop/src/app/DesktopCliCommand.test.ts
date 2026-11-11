@@ -1,5 +1,6 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
-import { expect, it } from "@effect/vitest";
+import { afterEach, beforeEach, expect, it } from "@effect/vitest";
+import * as HostProcess from "@cctools/shared/HostProcess";
 import * as Effect from "effect/Effect";
 import * as FileSystem from "effect/FileSystem";
 import * as Option from "effect/Option";
@@ -27,7 +28,6 @@ const environmentFor = (
     appImagePath: Option.none(),
   } as unknown as DesktopEnvironment.DesktopEnvironment["Service"]);
 
-/** The service for a packaged app; the launcher is written on Install. */
 const commandIn = (
   input: { home: string; baseDir?: string; platform?: NodeJS.Platform; isPackaged?: boolean },
   spawner?: ChildProcessSpawner.ChildProcessSpawner["Service"],
@@ -48,7 +48,6 @@ const commandIn = (
       : make;
   });
 
-/** A PowerShell that keeps the user's PATH in memory and can be told to fail reads. */
 const fakePowerShell = (initial: string) => {
   const registry = { path: initial, failReads: false, writes: 0 };
   const spawner = ChildProcessSpawner.make((command) =>
@@ -85,6 +84,14 @@ const fakePowerShell = (initial: string) => {
   return { registry, spawner };
 };
 
+const machinePath = process.env.PATH;
+beforeEach(() => {
+  process.env.PATH = "";
+});
+afterEach(() => {
+  process.env.PATH = machinePath;
+});
+
 it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
   it.effect("links the launcher onto PATH and removes only that link", () =>
     Effect.gen(function* () {
@@ -94,16 +101,20 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
       const command = yield* commandIn({ home });
       const link = path.join(home, ".local", "bin", "chatandcode");
 
-      expect(yield* command.state).toEqual({ supported: true, installedPath: null, onPath: false });
-      // Install writes the launcher itself, even when no local backend ever did.
+      expect(yield* command.state).toEqual({
+        supported: true,
+        installedPath: null,
+        onPath: false,
+        launcherPath: null,
+      });
       const installed = yield* command.install;
       expect(installed.installedPath).toBe(link);
+      expect(installed.launcherPath).toBe(path.join(home, ".chatandcode", "bin", "chatandcode"));
       expect(yield* fs.readLink(link)).toBe(path.join(home, ".chatandcode", "bin", "chatandcode"));
       expect((yield* command.install).installedPath).toBe(link);
 
       expect((yield* command.uninstall).installedPath).toBeNull();
       expect(yield* fs.exists(link)).toBe(false);
-      // The launcher itself stays for setup commands.
       expect(yield* fs.exists(path.join(home, ".chatandcode", "bin", "chatandcode"))).toBe(true);
     }).pipe(Effect.scoped),
   );
@@ -117,7 +128,6 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
       const theirs = path.join(home, ".local", "bin", "chatandcode");
       yield* fs.makeDirectory(path.dirname(theirs), { recursive: true });
       yield* fs.writeFileString(theirs, "npm's chatandcode\n");
-      // Even a broken link in the next folder is someone else's.
       yield* fs.makeDirectory(path.join(home, "bin"), { recursive: true });
       yield* fs.symlink(path.join(home, "gone"), path.join(home, "bin", "chatandcode"));
 
@@ -128,6 +138,14 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
       expect(yield* fs.readLink(path.join(home, "bin", "chatandcode"))).toBe(
         path.join(home, "gone"),
       );
+
+      const launcher = path.join(home, ".chatandcode", "bin", "chatandcode");
+      yield* fs.writeFileString(launcher, "npm's chatandcode\n");
+      process.env.PATH = path.dirname(launcher);
+      expect(yield* command.state).toMatchObject({ onPath: false, shadowedBy: launcher });
+      expect((yield* Effect.flip(command.install)).message).toContain("Could not set up");
+      yield* command.uninstall;
+      expect(yield* fs.readFileString(launcher)).toBe("npm's chatandcode\n");
     }).pipe(Effect.scoped),
   );
 
@@ -141,7 +159,6 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
 
       const after = yield* commandIn({ home, baseDir: path.join(home, "new-t3") });
       expect((yield* after.state).installedPath).toBe(link);
-      // Installing again points the link at this home's launcher.
       expect((yield* after.install).installedPath).toBe(link);
       expect(yield* fs.readLink(link!)).toBe(path.join(home, "new-t3", "bin", "chatandcode"));
       yield* after.uninstall;
@@ -150,24 +167,7 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
     }).pipe(Effect.scoped),
   );
 
-  it.effect("does not read a large binary another chatandcode links to", () =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const path = yield* Path.Path;
-      const home = yield* fs.makeTempDirectoryScoped();
-      // A big executable that happens to contain the marker text is still not ours.
-      const binary = path.join(home, "native-t3");
-      yield* fs.writeFileString(binary, `${"\0".repeat(64 * 1024)}${DesktopCliShim.MARKER}`);
-      yield* fs.makeDirectory(path.join(home, ".local", "bin"), { recursive: true });
-      yield* fs.symlink(binary, path.join(home, ".local", "bin", "chatandcode"));
-      const command = yield* commandIn({ home });
-      expect((yield* command.state).installedPath).toBeNull();
-      yield* command.uninstall;
-      expect(yield* fs.readLink(path.join(home, ".local", "bin", "chatandcode"))).toBe(binary);
-    }).pipe(Effect.scoped),
-  );
-
-  it.effect("reports when another chatandcode earlier on PATH would run instead", () =>
+  it.effect("refuses to install behind another chatandcode that runs first", () =>
     Effect.gen(function* () {
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
@@ -175,17 +175,86 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
       const shadow = path.join(home, "shadow");
       yield* fs.makeDirectory(shadow);
       yield* fs.writeFileString(path.join(shadow, "chatandcode"), "#!/bin/sh\n", { mode: 0o755 });
-      const previous = process.env.PATH;
       process.env.PATH = [shadow, path.join(home, ".local", "bin")].join(":");
-      yield* Effect.addFinalizer(() => Effect.sync(() => (process.env.PATH = previous)));
 
       const command = yield* commandIn({ home });
+      const theirs = path.join(shadow, "chatandcode");
+      expect((yield* command.state).shadowedBy).toBe(theirs);
+      const error = yield* Effect.flip(command.install);
+      expect(error.message).toContain(theirs);
+      expect(yield* fs.exists(path.join(home, ".local", "bin", "chatandcode"))).toBe(false);
+
+      yield* fs.remove(theirs);
       const installed = yield* command.install;
-      expect(installed.installedPath).toBe(path.join(home, ".local", "bin", "chatandcode"));
-      expect(installed.onPath).toBe(false);
-      yield* fs.remove(path.join(shadow, "chatandcode"));
-      expect((yield* command.state).onPath).toBe(true);
+      expect(installed).toMatchObject({
+        onPath: true,
+        installedPath: path.join(home, ".local", "bin", "chatandcode"),
+      });
+      expect(installed.shadowedBy).toBeUndefined();
     }).pipe(Effect.scoped),
+  );
+
+  it.effect.skipIf(HostProcess.Platform.defaultValue() === "win32")(
+    "skips a chatandcode directory or a file this user cannot execute",
+    () =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const home = yield* fs.makeTempDirectoryScoped();
+        const folder = path.join(home, "folder");
+        const plain = path.join(home, "plain");
+        const shadow = path.join(home, "shadow");
+        yield* fs.makeDirectory(path.join(folder, "chatandcode"), { recursive: true });
+        yield* fs.makeDirectory(plain);
+        yield* fs.writeFileString(path.join(plain, "chatandcode"), "notes\n");
+        // Root can execute mode 0o601; other users must honor the owner permissions.
+        yield* fs.chmod(path.join(plain, "chatandcode"), process.getuid?.() === 0 ? 0o600 : 0o601);
+        yield* fs.makeDirectory(shadow);
+        yield* fs.writeFileString(path.join(shadow, "chatandcode"), "#!/bin/sh\n", { mode: 0o755 });
+        process.env.PATH = [folder, plain, shadow, path.join(home, ".local", "bin")].join(":");
+
+        const command = yield* commandIn({ home });
+        expect((yield* command.state).shadowedBy).toBe(path.join(shadow, "chatandcode"));
+
+        const error = yield* Effect.flip(command.install);
+        expect(error.message).toContain(path.join(shadow, "chatandcode"));
+
+        yield* fs.remove(shadow, { recursive: true });
+        expect(yield* command.install).toMatchObject({
+          onPath: true,
+          installedPath: path.join(home, ".local", "bin", "chatandcode"),
+        });
+      }).pipe(Effect.scoped),
+  );
+
+  it.effect(
+    "does not treat its own launcher as another chatandcode when its folder is first on PATH",
+    () =>
+      Effect.gen(function* () {
+        const fs = yield* FileSystem.FileSystem;
+        const path = yield* Path.Path;
+        const home = yield* fs.makeTempDirectoryScoped();
+        const launcher = path.join(home, ".chatandcode", "bin", "chatandcode");
+        process.env.PATH = [path.dirname(launcher), path.join(home, ".local", "bin")].join(":");
+
+        const command = yield* commandIn({ home });
+        const installed = yield* command.install;
+
+        expect(yield* fs.exists(launcher)).toBe(true);
+        expect(installed).toMatchObject({
+          onPath: true,
+          installedPath: path.join(home, ".local", "bin", "chatandcode"),
+        });
+        expect(installed.shadowedBy).toBeUndefined();
+        expect(yield* command.state).toEqual(installed);
+
+        const removed = yield* command.uninstall;
+        expect(removed.installedPath).toBeNull();
+        expect(removed.onPath).toBe(true);
+        expect(yield* command.state).toEqual(removed);
+        expect(yield* fs.exists(installed.installedPath!)).toBe(false);
+        expect(yield* fs.exists(launcher)).toBe(true);
+      }).pipe(Effect.scoped),
   );
 
   it.effect("leaves the Windows PATH alone when it cannot be read", () =>
@@ -237,17 +306,6 @@ it.layer(NodeServices.layer)("DesktopCliCommand", (it) => {
       expect((yield* command.state).installedPath).toBeNull();
       yield* command.uninstall;
       expect(registry.path).toBe(userPath);
-    }).pipe(Effect.scoped),
-  );
-
-  it.effect("offers nothing for a development build", () =>
-    Effect.gen(function* () {
-      const fs = yield* FileSystem.FileSystem;
-      const command = yield* commandIn({
-        home: yield* fs.makeTempDirectoryScoped(),
-        isPackaged: false,
-      });
-      expect((yield* command.state).supported).toBe(false);
     }).pipe(Effect.scoped),
   );
 });

@@ -3,7 +3,7 @@ import type { RuntimeMode } from "@cctools/contracts";
 import { useMemo } from "react";
 
 import { ComposerInlineControl } from "../../components/ComposerToolbar";
-import { ControlPillMenu } from "../../components/ControlPill";
+import { Menu } from "../../components/ui/Menu";
 import { chatRuntimeModeChoices, RUNTIME_MODE_CHOICES } from "./thread-settings-options";
 
 /** A new chat's mode menu: Chat or Work, and in Work the Access it runs with. */
@@ -51,7 +51,7 @@ export function ChatModePill(props: {
     [props.disabled, props.mode, props.runtimeMode],
   );
   return (
-    <ControlPillMenu
+    <Menu
       title="Mode"
       actions={actions}
       onPressAction={({ nativeEvent }) => {
@@ -71,6 +71,6 @@ export function ChatModePill(props: {
         disabled={props.disabled}
         label={pillLabel}
       />
-    </ControlPillMenu>
+    </Menu>
   );
 }

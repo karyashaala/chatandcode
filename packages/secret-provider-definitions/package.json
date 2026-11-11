@@ -1,0 +1,18 @@
+{
+  "name": "@cctools/secret-provider-definitions",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./registry": {
+      "types": "./src/registry.ts",
+      "import": "./src/registry.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cctools/secret-provider-core": "workspace:*",
+    "@cctools/secret-provider-onepassword": "workspace:*"
+  }
+}

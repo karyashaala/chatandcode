@@ -5,8 +5,17 @@ import * as SqlClient from "effect/sql/SqlClient";
 
 import { migrationManifest, runMigrations } from "./Migrations.ts";
 import { reconcileForkMigrationLedger } from "./reconcileForkMigrationLedger.ts";
-import Feedback from "./Migrations/061_Feedback.ts";
-import PerfReports from "./Migrations/062_PerfReports.ts";
+import { forkMigrationManifest } from "./ForkMigrations.ts";
+import Feedback from "./ForkMigrations/001_Feedback.ts";
+import PerfReports from "./ForkMigrations/002_PerfReports.ts";
+
+const forkLedger = Effect.gen(function* () {
+  const sql = yield* SqlClient.SqlClient;
+  const rows = yield* sql<{ readonly migration_id: number; readonly name: string }>`
+    SELECT migration_id, name FROM chatandcode_migrations ORDER BY migration_id
+  `;
+  return rows.map((row) => [row.migration_id, row.name] as const);
+});
 
 const forkMigrations = [
   [41, "ProjectionThreadsParentThreadId"],
@@ -64,21 +73,10 @@ describe("fork migration ledger repair", () => {
       const attachments = yield* sql`SELECT * FROM feedback_attachments`;
       const reports = yield* sql`SELECT * FROM perf_reports`;
 
-      assert.deepStrictEqual(yield* runMigrations(), [
-        [51, "ProjectionThreadMessageContext"],
-        [52, "ProjectionThreadTitleState"],
-        [53, "PullRequestFilesViewed"],
-        [54, "ProjectionThreadsAutoSettleDisabledAt"],
-        [55, "OrchestrationV2"],
-        [56, "RemoveRedundantProjectionIndexes"],
-        [57, "ScheduledTaskWebhooks"],
-        [58, "WebhookRelayDeliveries"],
-        [59, "McpAppModelContext"],
-        [60, "ThreadSnapshotWindowIndexes"],
-        [61, "Feedback"],
-        [62, "PerfReports"],
-        [63, "ChatListMessageIndex"],
-      ]);
+      assert.deepStrictEqual(
+        yield* runMigrations(),
+        migrationManifest.filter(([id]) => id >= 51),
+      );
       const history = yield* sql<{ readonly migration_id: number; readonly name: string }>`
         SELECT migration_id, name FROM effect_sql_migrations ORDER BY migration_id
       `;
@@ -86,15 +84,7 @@ describe("fork migration ledger repair", () => {
         history.map((row) => [row.migration_id, row.name] as const),
         migrationManifest,
       );
-      assert.strictEqual(history.length, 63);
-      assert.deepStrictEqual(
-        history.slice(-3).map((row) => [row.migration_id, row.name]),
-        [
-          [61, "Feedback"],
-          [62, "PerfReports"],
-          [63, "ChatListMessageIndex"],
-        ],
-      );
+      assert.deepStrictEqual(yield* forkLedger, forkMigrationManifest);
       assert.deepStrictEqual(
         yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id < 41 ORDER BY migration_id`,
         sharedHistory,
@@ -139,15 +129,7 @@ describe("fork migration ledger repair", () => {
         history.map((row) => [row.migration_id, row.name] as const),
         migrationManifest,
       );
-      assert.strictEqual(history.length, 63);
-      assert.deepStrictEqual(
-        history.slice(-3).map((row) => [row.migration_id, row.name]),
-        [
-          [61, "Feedback"],
-          [62, "PerfReports"],
-          [63, "ChatListMessageIndex"],
-        ],
-      );
+      assert.deepStrictEqual(yield* forkLedger, forkMigrationManifest);
       assert.deepStrictEqual(
         yield* sql`
           SELECT name FROM sqlite_master WHERE type = 'table'
@@ -158,16 +140,15 @@ describe("fork migration ledger repair", () => {
     }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
   );
 
-  it.effect("keeps the upstream ledger intact and runs only migrations 61 and 62", () =>
+  it.effect("keeps the upstream ledger intact and runs fork migrations in their own ledger", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
       yield* runMigrations({ toMigrationInclusive: 60 });
       const history = yield* sql`SELECT * FROM effect_sql_migrations ORDER BY migration_id`;
-      assert.deepStrictEqual(yield* runMigrations(), [
-        [61, "Feedback"],
-        [62, "PerfReports"],
-        [63, "ChatListMessageIndex"],
-      ]);
+      assert.deepStrictEqual(
+        yield* runMigrations(),
+        migrationManifest.filter(([id]) => id > 60),
+      );
       assert.deepStrictEqual(
         yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id <= 60 ORDER BY migration_id`,
         history,
@@ -176,19 +157,24 @@ describe("fork migration ledger repair", () => {
         yield* sql`
           SELECT migration_id, name FROM effect_sql_migrations WHERE migration_id > 60 ORDER BY migration_id
         `,
-        [
-          { migration_id: 61, name: "Feedback" },
-          { migration_id: 62, name: "PerfReports" },
-          { migration_id: 63, name: "ChatListMessageIndex" },
-        ],
+        migrationManifest
+          .filter(([id]) => id > 60)
+          .map(([migration_id, name]) => ({ migration_id, name })),
       );
+      assert.deepStrictEqual(yield* forkLedger, forkMigrationManifest);
     }).pipe(Effect.provide(NodeSqliteClient.layer({ filename: ":memory:" }))),
   );
 
-  it.effect("upgrades schema 62 once and preserves turn items and the prior ledger", () =>
+  it.effect("moves a pre-merge fork ledger at 62 and adds the chat-list index once", () =>
     Effect.gen(function* () {
       const sql = yield* SqlClient.SqlClient;
-      yield* runMigrations({ toMigrationInclusive: 62 });
+      yield* runMigrations({ toMigrationInclusive: 60 });
+      yield* Feedback;
+      yield* PerfReports;
+      yield* sql`
+        INSERT INTO effect_sql_migrations (migration_id, name, created_at)
+        VALUES (61, 'Feedback', '2026-10-10 00:00:61'), (62, 'PerfReports', '2026-10-10 00:00:62')
+      `;
       yield* sql`
         INSERT INTO orchestration_v2_projection_turn_items
           (turn_item_id, thread_id, run_id, ordinal, type, status, updated_at, payload_json)
@@ -196,12 +182,23 @@ describe("fork migration ledger repair", () => {
           '2026-10-19', '{"text":"Keep this message"}')
       `;
       const items = yield* sql`SELECT * FROM orchestration_v2_projection_turn_items`;
-      const history = yield* sql`SELECT * FROM effect_sql_migrations ORDER BY migration_id`;
-      assert.deepStrictEqual(yield* runMigrations(), [[63, "ChatListMessageIndex"]]);
+      const history = yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id <= 60`;
       assert.deepStrictEqual(
-        yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id <= 62 ORDER BY migration_id`,
+        yield* runMigrations(),
+        migrationManifest.filter(([id]) => id > 60),
+      );
+      assert.deepStrictEqual(
+        yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id <= 60`,
         history,
       );
+      assert.deepStrictEqual(
+        yield* sql`SELECT migration_id, name, created_at FROM chatandcode_migrations WHERE migration_id <= 2`,
+        [
+          { migration_id: 1, name: "Feedback", created_at: "2026-10-10 00:00:61" },
+          { migration_id: 2, name: "PerfReports", created_at: "2026-10-10 00:00:62" },
+        ],
+      );
+      assert.deepStrictEqual(yield* forkLedger, forkMigrationManifest);
       assert.deepStrictEqual(
         yield* sql`SELECT * FROM orchestration_v2_projection_turn_items`,
         items,
@@ -242,21 +239,10 @@ describe("fork migration ledger repair", () => {
         yield* sql`SELECT * FROM effect_sql_migrations ORDER BY migration_id`,
         history,
       );
-      assert.deepStrictEqual(yield* runMigrations(), [
-        [51, "ProjectionThreadMessageContext"],
-        [52, "ProjectionThreadTitleState"],
-        [53, "PullRequestFilesViewed"],
-        [54, "ProjectionThreadsAutoSettleDisabledAt"],
-        [55, "OrchestrationV2"],
-        [56, "RemoveRedundantProjectionIndexes"],
-        [57, "ScheduledTaskWebhooks"],
-        [58, "WebhookRelayDeliveries"],
-        [59, "McpAppModelContext"],
-        [60, "ThreadSnapshotWindowIndexes"],
-        [61, "Feedback"],
-        [62, "PerfReports"],
-        [63, "ChatListMessageIndex"],
-      ]);
+      assert.deepStrictEqual(
+        yield* runMigrations(),
+        migrationManifest.filter(([id]) => id >= 51),
+      );
       assert.deepStrictEqual(
         yield* sql`SELECT * FROM effect_sql_migrations WHERE migration_id <= 50 ORDER BY migration_id`,
         history,
@@ -274,7 +260,7 @@ describe("fork migration ledger repair", () => {
       yield* runMigrations();
       yield* sql`
         INSERT INTO effect_sql_migrations (migration_id, name, created_at)
-        VALUES (64, 'FutureMigration', '2026-09-01 00:00:64')
+        VALUES (${Math.max(...migrationManifest.map(([id]) => id)) + 1}, 'FutureMigration', '2026-09-01')
       `;
       const history = yield* sql`SELECT * FROM effect_sql_migrations ORDER BY migration_id`;
       assert.deepStrictEqual(yield* runMigrations(), []);

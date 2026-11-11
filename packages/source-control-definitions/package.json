@@ -1,0 +1,23 @@
+{
+  "name": "@cctools/source-control-definitions",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./registry": {
+      "types": "./src/registry.ts",
+      "import": "./src/registry.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@cctools/source-control-azure-devops": "workspace:*",
+    "@cctools/source-control-bitbucket": "workspace:*",
+    "@cctools/source-control-core": "workspace:*",
+    "@cctools/source-control-forgejo": "workspace:*",
+    "@cctools/source-control-gitcafe": "workspace:*",
+    "@cctools/source-control-github": "workspace:*",
+    "@cctools/source-control-gitlab": "workspace:*"
+  }
+}

@@ -1,4 +1,3 @@
-// This policy is independent of Shell so lifecycle and authorization can be tested without a desktop.
 // Must equal BRAND via stageAppId("production" / "development") plus ".SnapShot".
 export const CLIENT_NAMES = [
   "ca.chatcode.chatandcode.SnapShot",

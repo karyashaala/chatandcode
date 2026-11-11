@@ -5,7 +5,6 @@ import {
   squashAtomCommandFailure,
 } from "@cctools/client-runtime/state/runtime";
 import type { EnvironmentId } from "@cctools/contracts";
-import { useCallback } from "react";
 
 import { stackedThreadToast, toastManager } from "~/components/ui/toast";
 import { useEnvironments } from "~/state/environments";
@@ -35,28 +34,22 @@ export function useChatsProject() {
   const handleNewThread = useNewThreadHandler();
 
   /** The Chats folder of a connected environment, or null when it offers none. */
-  const chatsWorkspaceRootFor = useCallback(
-    (environmentId: EnvironmentId | null): string | null => {
-      const environment = environments.find((entry) => entry.environmentId === environmentId);
-      return canCreateProjectInEnvironment(environment?.connection.phase)
-        ? (environment?.serverConfig?.chatsWorkspaceRoot ?? null)
-        : null;
-    },
-    [environments],
-  );
+  const chatsWorkspaceRootFor = (environmentId: EnvironmentId | null): string | null => {
+    const environment = environments.find((entry) => entry.environmentId === environmentId);
+    return canCreateProjectInEnvironment(environment?.connection.phase)
+      ? (environment?.serverConfig?.chatsWorkspaceRoot ?? null)
+      : null;
+  };
 
   // A chat starts on the machine the user is working on when it offers chats,
   // otherwise on the first connected machine that does.
-  const chatsEnvironmentId = useCallback(
-    (current: EnvironmentId | null): EnvironmentId | null => {
-      if (current !== null && chatsWorkspaceRootFor(current) !== null) return current;
-      return (
-        environments.find((entry) => chatsWorkspaceRootFor(entry.environmentId) !== null)
-          ?.environmentId ?? null
-      );
-    },
-    [environments, chatsWorkspaceRootFor],
-  );
+  const chatsEnvironmentId = (current: EnvironmentId | null): EnvironmentId | null => {
+    if (current !== null && chatsWorkspaceRootFor(current) !== null) return current;
+    return (
+      environments.find((entry) => chatsWorkspaceRootFor(entry.environmentId) !== null)
+        ?.environmentId ?? null
+    );
+  };
 
   // Without a connected environment that offers chats there is no Chat side.
   const chatsSupported = chatsEnvironmentId(null) !== null;
@@ -65,28 +58,25 @@ export function useChatsProject() {
    * Opens a new chat draft; false when it could not (the failure is reported).
    * Resolves true without opening when the user switched sides meanwhile.
    */
-  const startChatDraft = useCallback(
-    async (environmentId: EnvironmentId, options?: { replace?: boolean }): Promise<boolean> => {
-      const requestedSide = useUiStateStore.getState().sidebarSection;
-      const result = await openChats({ environmentId, input: {} });
-      if (result._tag !== "Success") {
-        if (!isAtomCommandInterrupted(result)) reportChatFailure(squashAtomCommandFailure(result));
-        return false;
-      }
-      if (useUiStateStore.getState().sidebarSection !== requestedSide) return true;
-      try {
-        await handleNewThread(
-          scopeProjectRef(result.value.environmentId, result.value.id),
-          options,
-        );
-        return true;
-      } catch (error) {
-        reportChatFailure(error);
-        return false;
-      }
-    },
-    [handleNewThread, openChats],
-  );
+  const startChatDraft = async (
+    environmentId: EnvironmentId,
+    options?: { replace?: boolean },
+  ): Promise<boolean> => {
+    const requestedSide = useUiStateStore.getState().sidebarSection;
+    const result = await openChats({ environmentId, input: {} });
+    if (result._tag !== "Success") {
+      if (!isAtomCommandInterrupted(result)) reportChatFailure(squashAtomCommandFailure(result));
+      return false;
+    }
+    if (useUiStateStore.getState().sidebarSection !== requestedSide) return true;
+    try {
+      await handleNewThread(scopeProjectRef(result.value.environmentId, result.value.id), options);
+      return true;
+    } catch (error) {
+      reportChatFailure(error);
+      return false;
+    }
+  };
 
   return { chatsWorkspaceRootFor, chatsSupported, chatsEnvironmentId, startChatDraft };
 }

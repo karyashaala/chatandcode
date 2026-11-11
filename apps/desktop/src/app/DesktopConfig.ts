@@ -55,6 +55,7 @@ export const DesktopConfig = Config.all({
   otlpProtocol: Config.schema(OtlpProtocol, "CHATANDCODE_OTLP_PROTOCOL").pipe(
     Config.withDefault("http/json"),
   ),
+  desktopLauncherPath: trimmedString("CHATANDCODE_DESKTOP_LAUNCHER_PATH"),
   appImagePath: trimmedString("APPIMAGE"),
   disableAutoUpdate: optionalBoolean("CHATANDCODE_DISABLE_AUTO_UPDATE"),
   mockUpdates: optionalBoolean("CHATANDCODE_DESKTOP_MOCK_UPDATES"),

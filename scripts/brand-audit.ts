@@ -460,7 +460,9 @@ const repositoryRoot = Effect.service(Path.Path).pipe(
 
 const trackedFiles = Effect.fn("brandAudit.trackedFiles")(function* (root: string) {
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
-  const child = yield* spawner.spawn(ChildProcess.make("git", ["ls-files", "-z"], { cwd: root }));
+  const child = yield* spawner.spawn(
+    ChildProcess.make("git", ["ls-files", "-z", "-t"], { cwd: root }),
+  );
   const [stdout, stderr, exitCode] = yield* Effect.all(
     [collectStreamAsString(child.stdout), collectStreamAsString(child.stderr), child.exitCode],
     { concurrency: "unbounded" },
@@ -471,7 +473,12 @@ const trackedFiles = Effect.fn("brandAudit.trackedFiles")(function* (root: strin
       stderr: stderr.trim(),
     });
   }
-  return stdout.split("\0").filter((filePath) => filePath.length > 0 && !shouldSkipPath(filePath));
+  // `-t` tags files a sparse checkout left off disk (CI's lint job skips vendored `.a` files) with "S".
+  return stdout
+    .split("\0")
+    .filter((entry) => entry.length > 2 && !entry.startsWith("S "))
+    .map((entry) => entry.slice(2))
+    .filter((filePath) => !shouldSkipPath(filePath));
 });
 
 const readAuditFiles = Effect.fn("brandAudit.readFiles")(function* (
@@ -493,7 +500,7 @@ const readAuditFiles = Effect.fn("brandAudit.readFiles")(function* (
                 Stream.runCollect,
                 Effect.flatMap((chunks) =>
                   chunks.some((chunk) => chunk.includes(0))
-                    ? Effect.succeed(undefined)
+                    ? Effect.succeed(null)
                     : fs.readFile(absolutePath).pipe(
                         Effect.map((bytes) => ({
                           path: filePath,
@@ -507,7 +514,7 @@ const readAuditFiles = Effect.fn("brandAudit.readFiles")(function* (
     },
     { concurrency: 16 },
   );
-  return files.filter((file): file is BrandAuditFile => file !== undefined);
+  return files.filter((file): file is BrandAuditFile => file !== null);
 });
 
 const printAuditResult = Effect.fn("brandAudit.printResult")(function* (
