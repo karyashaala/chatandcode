@@ -3,7 +3,8 @@ import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 import * as NodeUtil from "node:util";
-import { normalizeSecureRelayUrl } from "@cctools/shared/relayUrl";
+// Mobile CI installs only @cctools/mobile's dependencies, so import by path, not through scripts/.
+import { normalizeSecureRelayUrl } from "../../packages/shared/src/relayUrl.ts";
 
 export interface ChatAndCodePublicConfig {
   readonly clerkPublishableKey: string | undefined;
