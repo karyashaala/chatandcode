@@ -82,6 +82,9 @@
       "extends": "production"
     },
     "production": {
+      "ios": {
+        "ascAppId": "6835175051"
+      },
       "android": {
         "track": "internal"
       }
