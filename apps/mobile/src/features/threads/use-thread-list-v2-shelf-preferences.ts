@@ -14,6 +14,12 @@ export function useThreadListV2ShelfPreferences() {
   const workingShelfEnabled = loaded && preferencesResult.value.workingShelfEnabled !== false;
   const workingShelfExpanded =
     loaded && preferencesResult.value.threadListWorkingShelfExpanded === true;
+  const pinnedSectionEnabled = loaded && preferencesResult.value.pinnedSectionEnabled === true;
+  // Unlike the other shelves, Pinned starts open so a new pin never seems to vanish.
+  const pinnedShelfExpanded =
+    !loaded || preferencesResult.value.threadListPinnedShelfExpanded !== false;
+  const activeShelfExpanded =
+    !loaded || preferencesResult.value.threadListActiveShelfExpanded !== false;
 
   // Transforms read optimistic state so same-frame presses toggle twice.
   const toggleSnoozedShelf = () => {
@@ -32,6 +38,22 @@ export function useThreadListV2ShelfPreferences() {
       }),
     });
   };
+  const togglePinnedShelf = () => {
+    if (!loaded) return;
+    savePreferences({
+      transform: (current) => ({
+        threadListPinnedShelfExpanded: current.threadListPinnedShelfExpanded === false,
+      }),
+    });
+  };
+  const toggleActiveShelf = () => {
+    if (!loaded) return;
+    savePreferences({
+      transform: (current) => ({
+        threadListActiveShelfExpanded: current.threadListActiveShelfExpanded === false,
+      }),
+    });
+  };
   const toggleWorkingShelf = () => {
     if (!loaded) return;
     savePreferences({
@@ -43,10 +65,15 @@ export function useThreadListV2ShelfPreferences() {
 
   return {
     loaded,
+    activeShelfExpanded,
+    pinnedSectionEnabled,
+    pinnedShelfExpanded,
     settledShelfExpanded,
     snoozedShelfExpanded,
     workingShelfEnabled,
     workingShelfExpanded,
+    toggleActiveShelf,
+    togglePinnedShelf,
     toggleSettledShelf,
     toggleSnoozedShelf,
     toggleWorkingShelf,

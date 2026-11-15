@@ -73,6 +73,8 @@ import {
   ThreadListV2SettledShelfHeader,
   ThreadListV2ShowMoreRow,
   ThreadListV2SnoozedShelfHeader,
+  ThreadListV2PinnedShelfHeader,
+  ThreadListV2ActiveShelfHeader,
   ThreadListV2WorkingShelfHeader,
 } from "./thread-list-v2-items";
 import { useThreadRowProviderInstanceResolver } from "./thread-provider-instance";
@@ -276,10 +278,15 @@ function ThreadNavigationSidebarPane(
     setSettledVisibleCount((count) => count + THREAD_LIST_V2_SETTLED_PAGE_COUNT);
   const {
     loaded: shelfPreferencesLoaded,
+    activeShelfExpanded,
+    pinnedSectionEnabled,
+    pinnedShelfExpanded,
     settledShelfExpanded,
     snoozedShelfExpanded,
     workingShelfEnabled,
     workingShelfExpanded,
+    toggleActiveShelf,
+    togglePinnedShelf,
     toggleSettledShelf,
     toggleSnoozedShelf,
     toggleWorkingShelf,
@@ -321,6 +328,9 @@ function ThreadNavigationSidebarPane(
     now,
     pendingOrder,
     shelfPreferencesLoaded,
+    pinnedSectionEnabled,
+    pinnedShelfExpanded,
+    activeShelfExpanded,
     workingShelfEnabled,
     workingShelfExpanded,
     snoozedShelfExpanded,
@@ -556,6 +566,7 @@ function ThreadNavigationSidebarPane(
             hasQueuedMessages={item.hasQueuedMessages}
             snoozed={item.item.snoozed}
             pinned={item.item.pinned}
+            prominentPin={item.prominentPin}
             wokeAt={item.item.wokeAt}
             snoozePresetMinute={item.snoozePresetMinute ?? ""}
             snoozeWakeLabelText={item.snoozeWakeLabelText}
@@ -622,6 +633,26 @@ function ThreadNavigationSidebarPane(
           />
         );
       }
+      case "v2-pinned-shelf":
+        return (
+          <ThreadListV2PinnedShelfHeader
+            count={item.count}
+            disabled={item.disabled}
+            expanded={item.expanded}
+            onToggle={togglePinnedShelf}
+            pane="sidebar"
+          />
+        );
+      case "v2-active-shelf":
+        return (
+          <ThreadListV2ActiveShelfHeader
+            count={item.count}
+            disabled={item.disabled}
+            expanded={item.expanded}
+            onToggle={toggleActiveShelf}
+            pane="sidebar"
+          />
+        );
       case "v2-working-shelf":
         return (
           <ThreadListV2WorkingShelfHeader

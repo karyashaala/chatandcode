@@ -456,6 +456,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["beta boring sidebar folder rows multiline branch pull request details"],
   },
   {
+    id: "pinned-section",
+    title: "Pinned section",
+    to: "/settings/labs",
+    searchTerms: ["beta pin pinned in play header fold shelf sidebar important keep track"],
+  },
+  {
     id: "guest-links",
     title: "Guest links",
     to: "/settings/labs",

@@ -340,6 +340,8 @@ const SETTLED_TAIL_PAGE_COUNT = 25;
 const SETTLED_SHELF_EXPANDED_KEY = "chatandcode:sidebar:settled-expanded";
 const SNOOZED_SHELF_EXPANDED_KEY = "chatandcode:sidebar:snoozed-expanded";
 const WORKING_SHELF_EXPANDED_KEY = "chatandcode:sidebar:working-expanded";
+const PINNED_SHELF_EXPANDED_KEY = "chatandcode:sidebar:pinned-expanded";
+const ACTIVE_SHELF_EXPANDED_KEY = "chatandcode:sidebar:active-expanded";
 
 const inboxReturns = createInboxReturnTracker();
 
@@ -481,6 +483,18 @@ function useSidebarThreads(input: {
     false,
     Schema.Boolean,
   );
+  const pinnedSectionEnabled = useClientSettings((s) => s.sidebarPinnedSectionEnabled);
+  // Unlike the shelves below, Pinned starts open so a new pin never seems to vanish.
+  const [pinnedShelfExpanded, setPinnedShelfExpanded] = useLocalStorage(
+    PINNED_SHELF_EXPANDED_KEY,
+    true,
+    Schema.Boolean,
+  );
+  const [activeShelfExpanded, setActiveShelfExpanded] = useLocalStorage(
+    ACTIVE_SHELF_EXPANDED_KEY,
+    true,
+    Schema.Boolean,
+  );
   // Shared with the old per-project sidebar, so folders keep their open state.
   const projectExpandedById = useUiStateStore((store) => store.projectExpandedById);
   const setProjectExpanded = useUiStateStore((store) => store.setProjectExpanded);
@@ -541,6 +555,17 @@ function useSidebarThreads(input: {
   const visibleWorkingThreads = workingShelfExpanded
     ? workingThreads
     : routeThreadOnly(workingThreads, routeRowThreadKey);
+  const visiblePinnedThreads =
+    pinnedSectionEnabled && !pinnedShelfExpanded
+      ? routeThreadOnly(pinnedThreads, routeRowThreadKey)
+      : pinnedThreads;
+  // In play names the rest only to set it apart from Pinned; project folders already do that.
+  const showActiveHeader =
+    pinnedSectionEnabled && pinnedThreads.length > 0 && folderGroups === null;
+  const visibleActiveThreads =
+    showActiveHeader && !activeShelfExpanded
+      ? routeThreadOnly(activeThreads, routeRowThreadKey)
+      : activeThreads;
   const projectFolders =
     folderGroups === null
       ? null
@@ -562,9 +587,9 @@ function useSidebarThreads(input: {
           };
         });
   const orderedThreads = [
-    ...pinnedThreads,
+    ...visiblePinnedThreads,
     ...(projectFolders === null
-      ? activeThreads
+      ? visibleActiveThreads
       : projectFolders.flatMap((folder) => folder.threads)),
     ...visibleWorkingThreads,
     ...visibleSnoozedThreads,
@@ -606,6 +631,14 @@ function useSidebarThreads(input: {
     toggleSnoozedShelf: () => setSnoozedShelfExpanded((value) => !value),
     workingShelfExpanded,
     toggleWorkingShelf: () => setWorkingShelfExpanded((value) => !value),
+    pinnedSectionEnabled,
+    pinnedShelfExpanded,
+    togglePinnedShelf: () => setPinnedShelfExpanded((value) => !value),
+    visiblePinnedThreads,
+    showActiveHeader,
+    activeShelfExpanded,
+    toggleActiveShelf: () => setActiveShelfExpanded((value) => !value),
+    visibleActiveThreads,
     projectFolders,
     toggleProjectFolder: (group: SidebarProjectSnapshot) => {
       const keys = sidebarFolderExpansionKeys(group);
@@ -1388,6 +1421,14 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     toggleSnoozedShelf,
     workingShelfExpanded,
     toggleWorkingShelf,
+    pinnedSectionEnabled,
+    pinnedShelfExpanded,
+    togglePinnedShelf,
+    visiblePinnedThreads,
+    showActiveHeader,
+    activeShelfExpanded,
+    toggleActiveShelf,
+    visibleActiveThreads,
     projectFolders,
     toggleProjectFolder,
     renderedSettledThreads,
@@ -2046,8 +2087,11 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     if (list && header) {
       const listRect = list.getBoundingClientRect();
       const scale = list.offsetWidth > 0 ? listRect.width / list.offsetWidth : 1;
+      const headerRect = header.getBoundingClientRect();
+      // The drag-only label is zero height until projected; a shown Pinned header has its own.
       dragLabelOffsetRef.current =
-        header.getBoundingClientRect().top - listRect.top + SIDEBAR_DRAG_LABEL_HEIGHT * scale;
+        Math.max(headerRect.bottom, headerRect.top + SIDEBAR_DRAG_LABEL_HEIGHT * scale) -
+        listRect.top;
     } else {
       dragLabelOffsetRef.current = 0;
     }
@@ -2062,6 +2106,8 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
     });
   };
   const hasProjectFolders = projectFolders !== null && projectFolders.length > 0;
+  // With no pins there is no header; the drag-only label still offers a place to pin.
+  const showPinnedHeader = pinnedSectionEnabled && pinnedThreads.length > 0;
   const sidebarListItemsFresh = ((): readonly SidebarListItem[] => {
     const rowsOf = (
       list: readonly EnvironmentThreadShell[],
@@ -2084,10 +2130,10 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
       return [];
     }
     const items: SidebarListItem[] = [{ kind: "marker", marker: "pinned-header" }];
-    const pinnedRows = rowsOf(pinnedThreads, "pinned");
+    const pinnedRows = rowsOf(visiblePinnedThreads, "pinned");
     items.push(...pinnedRows);
     items.push({ kind: "marker", marker: "pinned-divider" });
-    const activeRows = rowsOf(activeThreads, "active");
+    const activeRows = rowsOf(visibleActiveThreads, "active");
     items.push({ kind: "marker", marker: "active-placeholder" });
     items.push(...activeRows);
     if (workingThreads.length > 0) {
@@ -3491,9 +3537,12 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               folderRow ??
                               (section === "working" ||
                               section === "snoozed" ||
-                              section === "settled"
+                              section === "settled" ||
+                              (section === "pinned" && showPinnedHeader)
                                 ? `shelf:${section}`
-                                : undefined)
+                                : section === "active" && showActiveHeader
+                                  ? "shelf:active"
+                                  : undefined)
                             }
                             variantAction={
                               section === "snoozed"
@@ -3502,10 +3551,15 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                                   ? "unsettle"
                                   : "settle"
                             }
-                            settlementSupported={serverConfigs.has(thread.environmentId)}
+                            settlementSupported={
+                              serverConfigs.has(thread.environmentId) &&
+                              // Settling also unpins, so pinned rows keep Settle in the menu only.
+                              !(pinnedSectionEnabled && section === "pinned")
+                            }
                             snoozeSupported={serverConfigs.has(thread.environmentId)}
                             pinningSupported={serverConfigs.has(thread.environmentId)}
                             isPinned={thread.pinnedAt != null}
+                            prominentPin={pinnedSectionEnabled}
                             dropVerb={
                               dragState?.activeKey === threadKey
                                 ? resolveSidebarDropVerb(dragState.activeSection, dragTargetSection)
@@ -3625,24 +3679,54 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                         switch (item.marker) {
                           case "pinned-header":
                             items.push(
-                              <SidebarDragBoundary
-                                key="pinned-header"
-                                marker="pinned-header"
-                                label="Pinned"
-                                visible={from !== null}
-                                isDropTarget={dragTargetSection === "pinned"}
-                              />,
+                              showPinnedHeader ? (
+                                <SidebarSectionHeader
+                                  key="pinned-header"
+                                  marker="pinned-header"
+                                  label="Pinned"
+                                  count={pinnedThreads.length}
+                                  dragging={from !== null}
+                                  isDropTarget={dragTargetSection === "pinned"}
+                                  toggle={{
+                                    expanded: pinnedShelfExpanded,
+                                    onToggle: togglePinnedShelf,
+                                  }}
+                                />
+                              ) : (
+                                <SidebarDragBoundary
+                                  key="pinned-header"
+                                  marker="pinned-header"
+                                  label="Pinned"
+                                  visible={from !== null}
+                                  isDropTarget={dragTargetSection === "pinned"}
+                                />
+                              ),
                             );
                             break;
                           case "pinned-divider":
                             items.push(
-                              <SidebarDragBoundary
-                                key="pinned-divider"
-                                marker="pinned-divider"
-                                label="Active"
-                                visible={from !== null}
-                                isDropTarget={dragTargetSection === "active"}
-                              />,
+                              showActiveHeader ? (
+                                <SidebarSectionHeader
+                                  key="pinned-divider"
+                                  marker="pinned-divider"
+                                  label="In play"
+                                  count={activeThreads.length}
+                                  dragging={from !== null}
+                                  isDropTarget={dragTargetSection === "active"}
+                                  toggle={{
+                                    expanded: activeShelfExpanded,
+                                    onToggle: toggleActiveShelf,
+                                  }}
+                                />
+                              ) : (
+                                <SidebarDragBoundary
+                                  key="pinned-divider"
+                                  marker="pinned-divider"
+                                  label="Active"
+                                  visible={from !== null}
+                                  isDropTarget={dragTargetSection === "active"}
+                                />
+                              ),
                             );
                             break;
                           case "active-placeholder":
@@ -3650,7 +3734,7 @@ export default function Sidebar({ routeReveal }: { routeReveal: SidebarRouteReve
                               <SidebarSectionPlaceholder
                                 key="active-placeholder"
                                 marker="active-placeholder"
-                                label="Active"
+                                label={showActiveHeader ? "In play" : "Active"}
                                 showHint={
                                   from !== null &&
                                   (activeThreads.length === 0 ||

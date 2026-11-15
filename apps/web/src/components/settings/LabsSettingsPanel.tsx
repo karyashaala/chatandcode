@@ -18,6 +18,7 @@ export function LabsSettingsPanel() {
       <SettingsSection id="beta" title="Beta">
         <BoringSidebarRow />
         <BoringSidebarMultilineRow />
+        <PinnedSectionRow />
         {/* Clerk is only mounted when this build has ChatAndCode Connect. */}
         {hasCloudPublicConfig() ? <GuestLinksRowWithSignIn /> : <GuestLinksRow />}
         <LinkedEnvironmentsRow />
@@ -63,6 +64,26 @@ function BoringSidebarMultilineRow() {
             updateSettings({ boringSidebarMultilineRows: Boolean(checked) })
           }
           aria-label="Two-line folder rows"
+        />
+      }
+    />
+  );
+}
+
+function PinnedSectionRow() {
+  const settings = useScopedSettings();
+  const updateSettings = useUpdateScopedSettings();
+  return (
+    <SettingsRow
+      {...searchableSetting("pinned-section")}
+      description="Show Pinned and In play headers at the top of the sidebar that fold like Working. Pinned rows drop the hover Settle button, since settling also unpins."
+      control={
+        <Switch
+          checked={settings.sidebarPinnedSectionEnabled}
+          onCheckedChange={(checked) =>
+            updateSettings({ sidebarPinnedSectionEnabled: Boolean(checked) })
+          }
+          aria-label="Pinned section"
         />
       }
     />

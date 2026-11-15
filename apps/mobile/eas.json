@@ -59,7 +59,7 @@
     "testflight": {
       "extends": "production",
       "env": {
-        "CHATANDCODE_MOBILE_VERSION": "3.0.0"
+        "CHATANDCODE_MOBILE_VERSION": "1.0.0"
       }
     },
     "production": {

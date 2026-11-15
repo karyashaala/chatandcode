@@ -237,7 +237,7 @@ const config: ExpoConfig = {
   slug: BRAND.slug,
   platforms: ["ios", "android"],
   scheme: variant.scheme,
-  version: repoEnv.CHATANDCODE_MOBILE_VERSION ?? "2.2.0",
+  version: repoEnv.CHATANDCODE_MOBILE_VERSION ?? "1.0.0",
   runtimeVersion: {
     // Skip costly fingerprinting on dev launches; preview and production OTAs require matching native projects.
     policy: runtimeVersionPolicy,

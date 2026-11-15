@@ -273,7 +273,13 @@ type ThreadListV2ShelfHeaderProps = {
   readonly pane?: "screen" | "sidebar";
 };
 
-const SHELF_LABEL = { working: "Working", snoozed: "Snoozed", settled: "Settled" } as const;
+const SHELF_LABEL = {
+  pinned: "Pinned",
+  active: "In play",
+  working: "Working",
+  snoozed: "Snoozed",
+  settled: "Settled",
+} as const;
 
 function ThreadListV2ShelfHeader(
   props: ThreadListV2ShelfHeaderProps & { readonly kind: keyof typeof SHELF_LABEL },
@@ -294,6 +300,18 @@ function ThreadListV2ShelfHeader(
     />
   );
 }
+
+export const ThreadListV2PinnedShelfHeader = memo(function ThreadListV2PinnedShelfHeader(
+  props: ThreadListV2ShelfHeaderProps,
+) {
+  return <ThreadListV2ShelfHeader {...props} kind="pinned" />;
+});
+
+export const ThreadListV2ActiveShelfHeader = memo(function ThreadListV2ActiveShelfHeader(
+  props: ThreadListV2ShelfHeaderProps,
+) {
+  return <ThreadListV2ShelfHeader {...props} kind="active" />;
+});
 
 export const ThreadListV2WorkingShelfHeader = memo(function ThreadListV2WorkingShelfHeader(
   props: ThreadListV2ShelfHeaderProps,
@@ -597,6 +615,8 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
   readonly hasQueuedMessages?: boolean;
   readonly snoozed?: boolean;
   readonly pinned?: boolean;
+  /** A filled, full-strength pin for rows under the Pinned header. */
+  readonly prominentPin?: boolean;
   readonly wokeAt: string | null;
   readonly snoozeWakeLabelText?: string;
   readonly timeLabel: string;
@@ -703,6 +723,17 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
   const sidebarPane = props.pane === "sidebar";
   const selected = props.selected === true;
   const rowAppearance = getThreadListV2RowAppearance(theme, sidebarPane, selected);
+  const pinIcon = props.prominentPin
+    ? {
+        name: "pin.fill" as const,
+        size: 13,
+        tint: selected
+          ? selectedThreadRowColors.iconTintClassName
+          : sidebarPane
+            ? "accent-drawer-foreground"
+            : "accent-foreground",
+      }
+    : { name: "pin" as const, size: 11, tint: rowAppearance.mutedIconTintClassName };
 
   const status = resolveThreadListV2Status(thread);
   const isUnread = status === "ready" && threadHasUnseenCompletion(thread);
@@ -1104,9 +1135,9 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
           {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
           {pinnedRow ? (
             <SymbolView
-              name="pin"
-              size={11}
-              tintColorClassName={rowAppearance.mutedIconTintClassName}
+              name={pinIcon.name}
+              size={pinIcon.size}
+              tintColorClassName={pinIcon.tint}
               type="monochrome"
             />
           ) : null}
@@ -1345,9 +1376,9 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
           {props.hasQueuedMessages ? <QueuedMessageIcon selected={selected} /> : null}
           {pinnedRow ? (
             <SymbolView
-              name="pin"
-              size={11}
-              tintColorClassName={rowAppearance.mutedIconTintClassName}
+              name={pinIcon.name}
+              size={pinIcon.size}
+              tintColorClassName={pinIcon.tint}
               type="monochrome"
             />
           ) : null}

@@ -158,6 +158,17 @@ choice.
 While this is on, the active list is ordered by when each thread last came back to you, so you
 cannot drag or move threads within it. Your saved order returns when you turn it off.
 
+### Pinned section (beta)
+
+Turn on **Settings → Labs → Pinned section** on web and desktop, or **Settings → General → Pinned
+section** on iOS and Android, to show a **Pinned** header above your pinned threads and an **In
+play** header above the rest of your active threads. Both fold like **Working**, but start open; a
+folded section still lists the thread you have open. The **In play** header appears only while you
+have pinned threads, and not while threads are grouped by project.
+
+On web and desktop, pinned rows have no Settle button on hover, because settling a thread also
+removes its pin. Settle a pinned thread from its menu instead.
+
 ### Group threads by project (beta)
 
 Turn on **Settings → Labs → Boring sidebar (group by project)** on web and desktop to put active

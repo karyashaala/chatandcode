@@ -108,7 +108,13 @@ export function SidebarDragBoundary(props: {
 }
 
 export function SidebarSectionHeader(props: {
-  marker: "working-header" | "snoozed-header" | "settled-header";
+  /** `pinned-divider` renders as the In play header when the Pinned section shows. */
+  marker:
+    | "pinned-header"
+    | "pinned-divider"
+    | "working-header"
+    | "snoozed-header"
+    | "settled-header";
   label: string;
   /** A muted trailing count. */
   count: number;
@@ -118,11 +124,15 @@ export function SidebarSectionHeader(props: {
   toggle: { expanded: boolean; onToggle: () => void };
 }) {
   const shelf =
-    props.marker === "working-header"
-      ? "working"
-      : props.marker === "snoozed-header"
-        ? "snoozed"
-        : "settled";
+    props.marker === "pinned-header"
+      ? "pinned"
+      : props.marker === "pinned-divider"
+        ? "active"
+        : props.marker === "working-header"
+          ? "working"
+          : props.marker === "snoozed-header"
+            ? "snoozed"
+            : "settled";
   return (
     <SortableSidebarMarker
       marker={props.marker}
@@ -133,6 +143,7 @@ export function SidebarSectionHeader(props: {
         role="treeitem"
         tabIndex={-1}
         data-sidebar-row={`shelf:${shelf}`}
+        data-sidebar-drag-boundary={props.marker === "pinned-divider" ? "" : undefined}
         onClick={props.toggle.onToggle}
         expanded={props.toggle.expanded}
         tone={props.isDropTarget ? "accent" : props.dragging ? "emphasized" : "muted"}

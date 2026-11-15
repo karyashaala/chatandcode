@@ -377,6 +377,38 @@ describe("sidebar drag projection", () => {
     expect(result.get("s")?.y).toBe(32);
   });
 
+  it("keeps shown Pinned and In play headers' own heights while dragging", () => {
+    const items = [
+      pinnedHeader,
+      thread("p", "pinned"),
+      divider,
+      thread("a1", "active"),
+      thread("a2", "active"),
+      settledHeader,
+      thread("s", "settled"),
+    ];
+    const strategy = createSidebarSortingStrategy({
+      items,
+      settledOrder: [],
+      settledExpanded: true,
+      boundaryLabelHeight: 24,
+    });
+    const args = layout(items, "a2", "a1");
+    // Both headers are 32px rows, not the zero-height drag-only labels.
+    let shift = 0;
+    for (const [index, rect] of args.rects.entries()) {
+      rect.top += shift;
+      rect.bottom += shift;
+      if (index === 0 || index === 2) {
+        rect.height = 32;
+        rect.bottom += 32;
+        shift += 32;
+      }
+    }
+    expect(strategy({ ...args, index: 1 })).toEqual(stationary);
+    expect(strategy({ ...args, index: 3 })?.y).toBe(83);
+  });
+
   it.each(["s1", "missing-target"])(
     "keeps label clearance when a settled drag is over %s",
     (over) => {

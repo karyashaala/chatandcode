@@ -545,6 +545,7 @@ type SidebarThreadRowProps = {
   snoozeSupported: boolean;
   pinningSupported: boolean;
   isPinned: boolean;
+  prominentPin?: boolean | undefined;
   sortable?: SortableThreadRowBag | undefined;
   dropVerb: SidebarDropVerb | null;
   dragOverPinned: boolean;
@@ -1092,6 +1093,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
   ) : null;
   const showPin =
     props.isPinned && (!sortable?.isDragging || (props.dragOverPinned && props.dropVerb === null));
+  const pinIconClassName = props.prominentPin ? "size-3.5 fill-current" : "size-3";
+  const pinToneClassName = props.prominentPin
+    ? "text-sidebar-foreground/85"
+    : "text-muted-foreground/65";
   const pinIndicator = showPin ? (
     props.pinningSupported && canOperateThread && !sortable?.isDragging ? (
       <Tooltip>
@@ -1101,17 +1106,26 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               type="button"
               aria-label="Unpin thread"
               onClick={handleUnpinClick}
-              className="group/unpin inline-flex cursor-pointer items-center rounded-sm text-muted-foreground/65 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              className={cn(
+                "group/unpin inline-flex cursor-pointer items-center rounded-sm outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                pinToneClassName,
+              )}
             />
           }
         >
           <PinIcon
             aria-hidden
-            className="size-3 shrink-0 group-hover/unpin:hidden group-focus-visible/unpin:hidden"
+            className={cn(
+              "shrink-0 group-hover/unpin:hidden group-focus-visible/unpin:hidden",
+              pinIconClassName,
+            )}
           />
           <PinOffIcon
             aria-hidden
-            className="hidden size-3 shrink-0 group-hover/unpin:block group-focus-visible/unpin:block"
+            className={cn(
+              "hidden shrink-0 group-hover/unpin:block group-focus-visible/unpin:block",
+              props.prominentPin ? "size-3.5" : "size-3",
+            )}
           />
         </TooltipTrigger>
         <TooltipPopup>Unpin thread</TooltipPopup>
@@ -1120,7 +1134,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
       <PinIcon
         aria-label="Pinned"
         role="img"
-        className="size-3 shrink-0 text-muted-foreground/65"
+        className={cn("shrink-0", pinIconClassName, pinToneClassName)}
       />
     )
   ) : null;

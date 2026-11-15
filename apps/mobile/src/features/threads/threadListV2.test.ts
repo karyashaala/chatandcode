@@ -419,6 +419,86 @@ describe("buildThreadListV2Items", () => {
     expect(layout.snoozedCount).toBe(2);
   });
 
+  it("folds pins and In play like Working, with queued tasks between them", () => {
+    const pin = (
+      id: string,
+      pinOrderKey: string,
+      overrides: Partial<EnvironmentThreadShell> = {},
+    ) =>
+      makeThread({
+        id: ThreadId.make(id),
+        title: id,
+        pinnedAt: "2026-06-01T00:00:00.000Z",
+        pinOrderKey,
+        ...overrides,
+      });
+    const input = {
+      threads: [
+        pin("quiet", "a0"),
+        pin("asks", "a1", { hasPendingApprovals: true }),
+        pin("running", "a2", {
+          runtime: {
+            status: "running" as const,
+            activeRunId: null,
+            providerInstanceId: ProviderInstanceId.make("codex"),
+            providerName: "Codex",
+            lastError: null,
+            updatedAt: NOW,
+          },
+        }),
+        pin("open", "a3"),
+        makeThread({ id: ThreadId.make("active"), title: "active" }),
+      ],
+      environmentId: null,
+      searchQuery: "",
+      now: NOW,
+      selectedThreadKey: `${environmentId}:open`,
+      pinnedShelfExpanded: false,
+    };
+    const inPlay = makeThread({ id: ThreadId.make("in-play"), title: "in-play" });
+
+    const off = buildThreadListV2Items(input);
+    expect(off.items.map((item) => item.thread.id)).toEqual([
+      "quiet",
+      "asks",
+      "running",
+      "open",
+      "active",
+    ]);
+    expect(off.pinnedShelfEnd).toBeNull();
+
+    const layout = buildThreadListV2Items({ ...input, pinnedSectionEnabled: true });
+    expect(layout.items.map((item) => item.thread.id)).toEqual(["open", "active"]);
+    const items = buildThreadListV2ListItems({
+      items: layout.items,
+      pendingTasks: [makePendingTask("queued")],
+      pinnedCount: layout.pinnedCount,
+      pinnedShelfExpanded: false,
+      pinnedShelfEnd: layout.pinnedShelfEnd,
+      activeCount: layout.activeCount,
+    });
+    expect(items.map((item) => item.key)).toEqual([
+      "v2-pinned-shelf",
+      `v2-thread:${environmentId}:open`,
+      "v2-pending-task:queued",
+      "v2-active-shelf",
+      `v2-thread:${environmentId}:active`,
+    ]);
+    expect(items[0]).toMatchObject({ count: 4, expanded: false });
+    expect(items[1]).toMatchObject({ prominentPin: true });
+    expect(items[3]).toMatchObject({ count: 1, expanded: true });
+
+    const foldedInPlay = buildThreadListV2Items({
+      ...input,
+      threads: [...input.threads, inPlay],
+      pinnedSectionEnabled: true,
+      activeShelfExpanded: false,
+      selectedThreadKey: `${environmentId}:in-play`,
+    });
+    expect(foldedInPlay.items.map((item) => item.thread.id)).toEqual(["in-play"]);
+    expect(foldedInPlay.activeCount).toBe(2);
+  });
+
   it("keeps snoozed threads visible on environments without the snooze capability", () => {
     const layout = buildThreadListV2Items({
       threads: [

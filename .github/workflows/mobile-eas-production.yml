@@ -7,9 +7,10 @@ name: Mobile EAS Production
 # runner, with corepack pinning pnpm 10.24 in eas.json, local == build.
 #
 # Every merge reconciles native fingerprints and publishes matching OTAs.
-# iOS prereleases use the testflight profile (3.0.0); App Store binaries use
+# iOS prereleases use the testflight profile's fixed version; App Store binaries use
 # production and the committed app version, built manually. Both receive OTAs
-# for their own major version. Android continues using production automatically.
+# for their own major version. Android uses production automatically once the
+# production EAS environment has CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE.
 # TestFlight beta review may still be required for subsequent builds.
 # Hold native-change PRs (the "📱 Native Change" label) and merge them as a
 # batch to avoid a store build per PR.
@@ -27,7 +28,7 @@ on:
           - build
           - update
       profile:
-        description: "production: store release; testflight: iOS 3.0.0 beta"
+        description: "production: store release; testflight: iOS beta"
         required: true
         type: choice
         default: production
@@ -82,6 +83,10 @@ jobs:
     env:
       APP_VARIANT: production
       NODE_OPTIONS: --max-old-space-size=8192
+      # app.config reads the EAS project from the environment, and eas-cli needs
+      # it before `eas env:pull` can fetch anything else.
+      CHATANDCODE_EXPO_OWNER: ${{ vars.CHATANDCODE_EXPO_OWNER }}
+      CHATANDCODE_EAS_PROJECT_ID: ${{ vars.CHATANDCODE_EAS_PROJECT_ID }}
     steps:
       - name: Validate TestFlight inputs
         if: github.event_name == 'workflow_dispatch' && inputs.profile == 'testflight'
@@ -155,7 +160,8 @@ jobs:
           # ignored build script (no allowBuilds config outside the repo).
           packager: npm
 
-      - name: Pull production environment variables
+      - id: env-pull
+        name: Pull production environment variables
         if: steps.expo-token.outputs.present == 'true'
         working-directory: apps/mobile
         env:
@@ -169,10 +175,12 @@ jobs:
           import { parseEnv } from "node:util";
           const env = parseEnv(readFileSync(".env.local", "utf8"));
           const googleServicesFile = env.CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE;
-          if (!googleServicesFile) {
-            throw new Error("CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE is missing from the production environment");
+          if (googleServicesFile) {
+            appendFileSync(process.env.GITHUB_ENV, `CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE=${googleServicesFile}\n`);
+          } else {
+            console.log("No CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE in the production environment; Android is skipped.");
           }
-          appendFileSync(process.env.GITHUB_ENV, `CHATANDCODE_ANDROID_GOOGLE_SERVICES_FILE=${googleServicesFile}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `platforms=${googleServicesFile ? "ios android" : "ios"}\n`);
           NODE
 
       - name: Apply manual version override
@@ -257,8 +265,9 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_PRODUCTION_TOKEN }}
           PLATFORM: ${{ inputs.platform || 'all' }}
+          ENABLED_PLATFORMS: ${{ steps.env-pull.outputs.platforms }}
         run: |
-          if [ "$PLATFORM" = "all" ]; then platforms="ios android"; else platforms="$PLATFORM"; fi
+          if [ "$PLATFORM" = "all" ]; then platforms="$ENABLED_PLATFORMS"; else platforms="$PLATFORM"; fi
           failed=0
           for platform in $platforms; do
             # eas-cli prints an environment-loaded notice to stdout before the
@@ -300,10 +309,13 @@ jobs:
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_PRODUCTION_TOKEN }}
+          ENABLED_PLATFORMS: ${{ steps.env-pull.outputs.platforms }}
         run: |
           failed=0
           message="$(git log -1 --pretty=%s | head -c 120) ($(git rev-parse --short=9 HEAD))"
-          for target in ios:production ios:testflight android:production; do
+          targets="ios:production ios:testflight"
+          if [[ " $ENABLED_PLATFORMS " == *" android "* ]]; then targets="$targets android:production"; fi
+          for target in $targets; do
             platform="${target%%:*}"
             profile="${target#*:}"
             unset CHATANDCODE_MOBILE_VERSION
