@@ -7,7 +7,6 @@ import React, { useEffect, useRef, useState } from "react";
 import type {
   EnvironmentId,
   ModelSelection,
-  ProviderInteractionMode,
   ProviderOptionSelection,
   RuntimeMode,
   ServerProvider,
@@ -86,17 +85,13 @@ import {
 } from "../home/homeThreadList";
 import { useMobileProjectGroupingSettings } from "../../state/project-grouping";
 import {
-  resolvePendingTaskInteractionMode,
-  resolveProviderInteractionMode,
-} from "../../state/legacy-plan-mode";
-import { useLegacyPlanModeState } from "./use-legacy-plan-mode-enabled";
-import {
   resolveNewTaskDraftWorkspace,
   resolveNewTaskBranchWorktreePath,
   resolveNewTaskLocalWorkspaceSelection,
 } from "./new-task-context-presentation";
 import { resolveEnvironmentProjectMatch } from "./new-task-project-selection";
 import { useNewTaskProjectDefaults } from "./use-new-task-project-defaults";
+import { resolveNewThreadRuntimeMode } from "./thread-settings-options";
 import { resolveProjectThreadCreationBranch } from "./projectThreadCreationValidation";
 import {
   INACTIVE_FLOW_KEY,
@@ -157,8 +152,6 @@ type NewTaskFlowContextValue = {
   readonly availableBranches: ReadonlyArray<VcsRef>;
   readonly currentCheckoutBranchName: string | null;
   readonly runtimeMode: RuntimeMode;
-  readonly interactionMode: ProviderInteractionMode;
-  readonly planModeEnabled: boolean;
   readonly expandedProvider: string | null;
   readonly environments: ReadonlyArray<{
     readonly environmentId: EnvironmentId;
@@ -215,7 +208,6 @@ type NewTaskFlowContextValue = {
   readonly loadBranches: () => void;
   readonly setRuntimeMode: (value: RuntimeMode) => void;
   readonly setChatSubMode: (value: "chat" | "work") => void;
-  readonly setInteractionMode: (value: ProviderInteractionMode) => void;
   readonly setSelectedModelOptions: (
     value: ReadonlyArray<ProviderOptionSelection> | undefined,
   ) => void;
@@ -236,7 +228,6 @@ export function NewTaskFlowProvider(
   const threads = useThreadShells();
   const { savedConnectionsById } = useSavedRemoteConnections();
   const groupingSettings = useMobileProjectGroupingSettings();
-  const { enabled: legacyPlanModeEnabled } = useLegacyPlanModeState();
 
   const serverConfigs = useServerConfigs();
   // New chats start from Home's Chat tab, so the Chats project is no task destination.
@@ -385,7 +376,7 @@ export function NewTaskFlowProvider(
   const prompt = selectedProjectDraft.text;
   const attachments = selectedProjectDraft.attachments;
   const projectGitStatus = useEnvironmentQuery(
-    selectedProject !== null && selectedProject.workspaceRoot !== ""
+    props.active !== false && selectedProject !== null && selectedProject.workspaceRoot !== ""
       ? vcsEnvironment.status({
           environmentId: selectedProject.environmentId,
           input: { cwd: selectedProject.workspaceRoot },
@@ -440,7 +431,12 @@ export function NewTaskFlowProvider(
   const defaultRuntimeMode = isChatsDraft
     ? "approval-required"
     : projectSettings.settings.defaultRuntimeMode;
-  const runtimeMode = selectedProjectDraft.runtimeMode ?? defaultRuntimeMode;
+  const managedPolicy = selectedEnvironmentServerConfig?.managedPolicy;
+  const runtimeMode = resolveNewThreadRuntimeMode(
+    selectedProjectDraft.runtimeMode,
+    defaultRuntimeMode,
+    managedPolicy,
+  );
   const chatSubMode = selectedProjectDraft.chatSubMode ?? "chat";
 
   // Antigravity keeps unavailable selections so sign-out or a catalog change
@@ -521,11 +517,6 @@ export function NewTaskFlowProvider(
     selectedEnvironmentServerConfig?.providers.find(
       (provider) => provider.instanceId === selectedModel?.instanceId,
     ) ?? null;
-  const planModeEnabled =
-    legacyPlanModeEnabled && selectedProviderStatus?.showInteractionModeToggle !== false;
-  const interactionMode = planModeEnabled
-    ? (selectedProjectDraft.interactionMode ?? DEFAULT_PROVIDER_INTERACTION_MODE)
-    : DEFAULT_PROVIDER_INTERACTION_MODE;
   const setSelectedModelKey = (
     key: string | null,
     options?: ReadonlyArray<ProviderOptionSelection>,
@@ -540,15 +531,7 @@ export function NewTaskFlowProvider(
     const selection = withRememberedModelOptions(
       options ? { ...option.selection, options } : option.selection,
     );
-    const provider = selectedEnvironmentServerConfig?.providers.find(
-      (candidate) => candidate.instanceId === selection.instanceId,
-    );
-    updateComposerDraftSettings(selectedProjectDraftKey, {
-      modelSelection: selection,
-      ...(provider?.showInteractionModeToggle === false
-        ? { interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE }
-        : {}),
-    });
+    updateComposerDraftSettings(selectedProjectDraftKey, { modelSelection: selection });
     setStickyComposerModelSelection(selection);
   };
   const setSelectedModelOptions = (options: ReadonlyArray<ProviderOptionSelection> | undefined) => {
@@ -753,13 +736,6 @@ export function NewTaskFlowProvider(
       updateComposerDraftSettings(selectedProjectDraftKey, { chatSubMode: value });
     }
   };
-  const setInteractionMode = (value: ProviderInteractionMode) => {
-    if (selectedProjectDraftKey) {
-      updateComposerDraftSettings(selectedProjectDraftKey, {
-        interactionMode: resolveProviderInteractionMode(selectedProviderStatus, value),
-      });
-    }
-  };
 
   const buildPendingTaskMessage = (
     metadata: TurnCommandMetadata,
@@ -805,14 +781,14 @@ export function NewTaskFlowProvider(
       // A Chat-mode chat has no tools to grant access to.
       ...(isChatsDraft && chatSubMode === "chat"
         ? {}
-        : { runtimeMode: draft.runtimeMode ?? defaultRuntimeMode }),
-      interactionMode: resolvePendingTaskInteractionMode({
-        planModeEnabled: legacyPlanModeEnabled,
-        draftInteractionMode: draft.interactionMode,
-        provider: selectedEnvironmentServerConfig?.providers.find(
-          (candidate) => candidate.instanceId === draftModelSelection.instanceId,
-        ),
-      }),
+        : {
+            runtimeMode: resolveNewThreadRuntimeMode(
+              draft.runtimeMode,
+              defaultRuntimeMode,
+              managedPolicy,
+            ),
+          }),
+      interactionMode: DEFAULT_PROVIDER_INTERACTION_MODE,
       creation: {
         projectId: selectedProject.id,
         projectTitle: selectedProject.title,
@@ -921,8 +897,6 @@ export function NewTaskFlowProvider(
     availableBranches,
     currentCheckoutBranchName,
     runtimeMode,
-    interactionMode,
-    planModeEnabled,
     expandedProvider,
     environments,
     selectedProject,
@@ -956,7 +930,6 @@ export function NewTaskFlowProvider(
     loadBranches,
     setRuntimeMode,
     setChatSubMode,
-    setInteractionMode,
     setSelectedModelOptions,
     setExpandedProvider: (value: string | null) => updateFlow({ expandedProvider: value }),
   } satisfies NewTaskFlowContextValue;

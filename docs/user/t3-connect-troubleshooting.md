@@ -99,7 +99,8 @@ Fix:
 
 ## Sign-in, account, or link problems
 
-ChatAndCode Connect does not have an active link between your account and the host.
+This device's ChatAndCode Connect sign-in is not ready yet, or ChatAndCode Connect does not have
+an active link between your account and the host.
 
 - **The host is linked to a different account.** Sign in to the same ChatAndCode Connect
   account on this device and on the host. On the host, run `chatandcode connect logout`,
@@ -107,10 +108,14 @@ ChatAndCode Connect does not have an active link between your account and the ho
 - **ChatAndCode Connect is off on the host, or the host only publishes agent activity.**
   On the host, open **Settings > Sharing & access** and turn **ChatAndCode Connect** on, or
   run `chatandcode connect`.
-- **The host was linked, but the server did not apply the link yet.** Run
-  `chatandcode service restart` on the host, or restart `chatandcode serve`.
+- **The host was linked, but the server did not apply the link yet.** Restart
+  the server on the host: quit and reopen the ChatAndCode desktop app, run
+  `chatandcode service restart`, or stop `chatandcode serve` and run it again.
 - **This device's sign-in expired, or the host no longer accepts this
   device.** Sign out of ChatAndCode Connect and sign in again.
+- **This device is still loading its ChatAndCode Connect sign-in.** Wait a moment;
+  ChatAndCode retries on its own. If it keeps waiting, reload or restart ChatAndCode on
+  this device.
 - **Your account reached its tunnel limit.** Remove an environment you do not
   use from your ChatAndCode Connect account, then restart ChatAndCode on the host.
 
@@ -149,3 +154,7 @@ If none of this helps, open an issue on
 - The text from **Copy diagnostics** in the environment's **Details**.
 - The output of `chatandcode connect status` on the host.
 - The trace ID, if one is shown.
+- If the tunnel dropped earlier, the host's tunnel log, `relay-client.ndjson`
+  in the logs folder (`~/.chatandcode/userdata/logs` by default). It records when the
+  tunnel connected, warned, exited, and restarted, with the tunnel token
+  removed.

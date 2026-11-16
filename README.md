@@ -2,7 +2,7 @@
 
 ChatAndCode is an "agent harness control surface". It enables control of the agents on your machine with a mobile app, [web app](https://app.chatcode.ca) and [Electron-based desktop app](https://github.com/karyashaala/chatandcode/releases). App Store and Google Play releases are coming.
 
-Works with your subscriptions on Claude Code, Codex, Cursor, Grok Build, OpenCode, and Google Antigravity. If they're set up on your computer, ChatAndCode can control them.
+Works with your subscriptions on Claude Code, Codex, Cursor, Grok Build, OpenCode, Google Antigravity, and fx. If they're set up on your computer, ChatAndCode can control them.
 
 ## "Wait, what are you selling me?"
 
@@ -19,7 +19,7 @@ Thank you to Theo and the [T3 Code contributors](https://github.com/pingdotgg/t3
 ## Installation
 
 > [!WARNING]
-> ChatAndCode currently supports Codex, Claude, Cursor, Grok Build, OpenCode, and Antigravity. Install and authenticate at least one provider before use:
+> ChatAndCode currently supports Codex, Claude, Cursor, Grok Build, OpenCode, Antigravity, and fx. Install and authenticate at least one provider before use:
 >
 > - Codex: install [Codex CLI](https://developers.openai.com/codex/cli) and run `codex login`
 > - Claude: install [Claude Code](https://claude.com/product/claude-code) and run `claude auth login`
@@ -27,6 +27,7 @@ Thank you to Theo and the [T3 Code contributors](https://github.com/pingdotgg/t3
 > - Grok Build: install [Grok Build CLI](https://x.ai/cli) and run `grok login`
 > - OpenCode: install [OpenCode](https://opencode.ai) and run `opencode auth login`
 > - Antigravity: enable it in Settings, then use **Install Antigravity** and **Sign in with Google**. No CLI is required.
+> - fx: install [fx](https://fx.sh) and run `fx login` on the machine running the ChatAndCode server ([setup guide](./docs/user/providers-fx.md))
 
 ### Command line
 
@@ -42,7 +43,7 @@ irm https://chatcode.ca/install.ps1 | iex
 
 Then run `chatandcode` to start the server and open the local web app. `chatandcode service install` keeps it running in the background, `chatandcode update` moves to a newer release, and `chatandcode --help` has the full reference.
 
-To try it once without installing, run `npx chatandcode@latest` instead.
+To try it once without installing, run `npx chatandcode@latest`. It offers to install the `chatandcode` command for you.
 
 ### Desktop app
 

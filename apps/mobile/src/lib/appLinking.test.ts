@@ -21,6 +21,7 @@ describe("shouldHandleAppLink", () => {
     "chatandcode://threads/env-1/thread-1",
     "chatandcode://pair?pairingUrl=x",
     "chatandcode-dev://settings/usage?tab=limits",
+    "https://app.chatcode.ca/threads/env/thread?prompt=Fix%20expo-development-client%20and%20chatandcode://expo-sharing",
   ])("handles path-bearing URL %s", (url) => {
     expect(shouldHandleAppLink(url, true)).toBe(true);
   });

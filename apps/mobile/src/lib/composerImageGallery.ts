@@ -1,6 +1,6 @@
 import { imageMimeType } from "@cctools/shared/image";
 import type { EnvironmentId } from "@cctools/contracts";
-import type { FilePreviewItem } from "../components/FilePreviewModal.types";
+import type { FilePreviewItem } from "../components/ui/FilePreviewModal.types";
 import { isFileBackedComposerAttachment, type DraftComposerAttachment } from "./composerImages";
 
 export function composerImageGallery(

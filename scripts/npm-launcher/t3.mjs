@@ -20,8 +20,20 @@ function chatandcodeHome() {
   return path.resolve(raw);
 }
 
+const isTransient = (status) => status === 408 || status === 429 || status >= 500;
+
 async function get(url) {
-  const response = await fetch(url);
+  let response;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      response = await fetch(url);
+      if (attempt === 4 || !isTransient(response.status)) break;
+      await response.body?.cancel();
+    } catch (error) {
+      if (attempt === 4) throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** (attempt - 1)));
+  }
   if (response.status === 404) {
     throw new Error(
       `${url} does not exist yet. If ${version} was just released, try again in a few minutes.`,
@@ -62,7 +74,7 @@ async function download(url, file) {
 }
 
 async function install(dir, key) {
-  const archive = `t3-${version}-${key}.${process.platform === "win32" ? "zip" : "tar.gz"}`;
+  const archive = `chatandcode-${version}-${key}.${process.platform === "win32" ? "zip" : "tar.gz"}`;
   const base = (
     process.env.CHATANDCODE_RELEASE_BASE_URL ||
     "https://github.com/karyashaala/chatandcode/releases/download"
@@ -91,6 +103,24 @@ async function install(dir, key) {
     });
     if (extract.status !== 0) throw new Error(`could not extract ${archive}`);
     fs.rmSync(file);
+    const validate = spawnSync(
+      path.join(staging, process.platform === "win32" ? "chatandcode.exe" : "chatandcode"),
+      ["--version"],
+      {
+        stdio: ["ignore", "ignore", "pipe"],
+        encoding: "utf8",
+        timeout: 30_000,
+        killSignal: "SIGKILL",
+      },
+    );
+    if (validate.status !== 0) {
+      throw executableError(
+        key,
+        validate.error?.message ||
+          validate.stderr?.trim() ||
+          `--version exited with ${validate.signal || validate.status}`,
+      );
+    }
     fs.writeFileSync(path.join(staging, ".install-complete"), `${version}\n`);
     publish(staging, dir);
   } finally {
@@ -173,9 +203,18 @@ async function main() {
   for (const signal of ["SIGINT", "SIGTERM", "SIGHUP"]) {
     process.on(signal, () => (ipc || signal !== "SIGINT") && child.kill(signal));
   }
-  child.on("error", (error) => fail(error));
+  child.on("error", (error) => fail(executableError(key, error.message)));
   child.on("exit", (code, signal) =>
     process.exit(code ?? 128 + (os.constants.signals[signal] || 1)),
+  );
+}
+
+function executableError(key, detail) {
+  return new Error(
+    `could not run ChatAndCode ${version} for ${key}: ${detail}` +
+      (process.platform === "linux"
+        ? "\nThe Linux release requires glibc; musl-based systems such as Alpine are not supported. Use a glibc-based Linux environment."
+        : ""),
   );
 }
 

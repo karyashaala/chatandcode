@@ -1339,7 +1339,7 @@
     "ticket": "PB1"
   },
   {
-    "path": "apps/marketing/src/pages/index.astro",
+    "path": "apps/marketing/src/pages/[...locale]/index.astro",
     "pattern": "^(?:      <p>Built on <a href=\"https://github\\.com/pingdotgg/t\u0033code\">T\u0033 Code</a> \\(MIT\\)\\.</p>)$",
     "reason": "attribution to upstream T\u0033 Code",
     "ticket": "PB1"
@@ -1402,6 +1402,66 @@
     "path": "apps/server/src/mcp/toolkits/pullRequests/handlers.test.ts",
     "pattern": "pingdotgg/t\u0033code|T\u0033Tools/T\u0033Code|T\u0033Code|t\u0033code",
     "reason": "Repository and pull request URL fixtures in upstream's pull request tool tests are parser inputs; the 2026-10-30 merge restored them as upstream wrote them (RF03).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "scripts/scenarios/**",
+    "pattern": "t\u0033-mobile\\.ts",
+    "reason": "Upstream's e2e scenario helper file keeps its name, so upstream scenarios that import it merge unchanged.",
+    "ticket": "RN00"
+  },
+  {
+    "path": "docs/operations/scenarios.md",
+    "pattern": "t\u0033-mobile\\.ts",
+    "reason": "Names upstream's e2e scenario helper file, which keeps its name.",
+    "ticket": "RN00"
+  },
+  {
+    "path": "apps/web/src/components/search/ProjectContentSearchDialog.composition.browser.test.tsx",
+    "pattern": "t\u0033-chat(?:-(?:light|dark))?(?![A-Za-z0-9_-])",
+    "reason": "Persisted theme IDs name an existing palette.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/server/integration/TransferBudgetV2Fixture.integration.ts,apps/server/src/orchestration-v2/ThreadFork.execution.test.ts,packages/client-runtime/src/state/threadDetail.test.ts}",
+    "pattern": "refs/t\u0033/[^\"\\s`]+",
+    "reason": "Checkpoint ref fixtures match the checkpoint ref namespace the server still writes (RF00).",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{apps/mobile/modules/t\u0033-voice-transcription,apps/mobile/modules/t\u0033-web-socket}/**",
+    "pattern": "com\\.t\u0033tools\\.voicetranscription|https://t\u0033tools\\.com",
+    "reason": "Native module Android group and podspec homepage change only with a coordinated native rebuild, like the other upstream modules.",
+    "ticket": "RB16"
+  },
+  {
+    "path": "{apps/server/src/vcs/GitVcsDriverCore.test.ts,packages/shared/src/composerContextReferences.test.ts,packages/source-control-github/src/server/gitHubPullRequestJson.test.ts,apps/mobile/src/native/nativeWebSocket.ios.test.ts}",
+    "pattern": "\"t\u0033\"",
+    "reason": "Arbitrary fixture values (a branch named after the kept t\u0033/ branch prefix, thread and node ids, a socket protocol), not the product's name.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "apps/marketing/src/pages/llms.txt.ts",
+    "pattern": "built on T\u0033 Code",
+    "reason": "attribution to upstream T\u0033 Code",
+    "ticket": "PB1"
+  },
+  {
+    "path": "apps/server/src/cloud/CloudLink.lifecycle.test.ts",
+    "pattern": "t\u0033-env:",
+    "reason": "The relay link-proof issuer the server signs with (CloudLink.ts) keeps its protocol name.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "packages/shared/src/speech.test.ts",
+    "pattern": "T\u0033 Code",
+    "reason": "A speech hint fixture that checks whitespace folding, not the product's name.",
+    "ticket": "RF03"
+  },
+  {
+    "path": "{evals/mcp-tool-use/cases/secrets.ndjson,evals/mcp-tool-use/run.test.ts}",
+    "pattern": "pingdotgg(?:/|\\\\/)t\u0033code",
+    "reason": "Eval cases cite the upstream T\u0033 Code issues they came from, and the test checks that citation format.",
     "ticket": "RF03"
   }
 ]

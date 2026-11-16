@@ -1,13 +1,13 @@
 import { getDesktopScheme } from "../electron/desktopScheme.ts";
 import * as Cause from "effect/Cause";
-import * as Duration from "effect/Duration";
+import * as Config from "effect/Config";
 import * as Effect from "effect/Effect";
 import * as Option from "effect/Option";
 import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 
 import * as NetService from "@cctools/shared/Net";
-import * as Crypto from "effect/Crypto";
+import * as SecureRandom from "effect/crypto/SecureRandom";
 import * as ElectronApp from "../electron/ElectronApp.ts";
 import * as ElectronDialog from "../electron/ElectronDialog.ts";
 import * as ElectronProtocol from "../electron/ElectronProtocol.ts";
@@ -16,10 +16,13 @@ import { installDesktopIpcHandlers } from "../ipc/DesktopIpcHandlers.ts";
 import * as DesktopAppActivation from "./DesktopAppActivation.ts";
 import * as DesktopAppIdentity from "./DesktopAppIdentity.ts";
 import * as DesktopClerk from "./DesktopClerk.ts";
+import * as DesktopCliCommand from "./DesktopCliCommand.ts";
 import * as DesktopApplicationMenu from "../window/DesktopApplicationMenu.ts";
 import * as DesktopWindow from "../window/DesktopWindow.ts";
 import * as PreviewPasskeys from "../preview/Passkeys.ts";
+import * as DesktopBackendManager from "../backend/DesktopBackendManager.ts";
 import * as DesktopBackendPool from "../backend/DesktopBackendPool.ts";
+import * as DesktopHomeOwner from "../backend/DesktopHomeOwner.ts";
 import * as DesktopEnvironment from "./DesktopEnvironment.ts";
 import * as DesktopLegacyLocalStorage from "./DesktopLegacyLocalStorage.ts";
 import * as DesktopLifecycle from "./DesktopLifecycle.ts";
@@ -43,8 +46,13 @@ const DEFAULT_DESKTOP_BACKEND_PORT = 3773;
 const MAX_TCP_PORT = 65_535;
 const DESKTOP_BACKEND_PORT_PROBE_HOSTS = ["127.0.0.1", "0.0.0.0", "::"] as const;
 
-const makeDesktopRunId = Crypto.Crypto.pipe(
-  Effect.flatMap((crypto) => crypto.randomUUIDv4()),
+const LinuxDesktopSessionConfig = Config.all({
+  current: Config.String("XDG_CURRENT_DESKTOP").pipe(Config.option),
+  session: Config.String("XDG_SESSION_DESKTOP").pipe(Config.option),
+});
+
+const makeDesktopRunId = SecureRandom.SecureRandom.pipe(
+  Effect.flatMap((random) => random.uuidV4()),
   Effect.map((value) => value.replaceAll("-", "").slice(0, 12)),
 );
 
@@ -155,7 +163,7 @@ const stopAllPoolInstances = Effect.fn("desktop.app.stopAllPoolInstances")(
     const instances = yield* pool.list;
     yield* Effect.forEach(
       instances,
-      (instance) => instance.stop({ timeout: Duration.seconds(5) }),
+      (instance) => instance.stop({ timeout: DesktopBackendManager.BACKEND_QUIT_STOP_TIMEOUT }),
       { concurrency: "unbounded" },
     );
   },
@@ -187,6 +195,18 @@ const bootstrap = Effect.gen(function* () {
   );
 
   yield* snapShot.initialize;
+  // Only the user's own login shell PATH shows every chatandcode a new terminal runs; a fresh install has
+  // no cached one. Without it, the command is left to Settings.
+  const installCli = (yield* DesktopCliCommand.DesktopCliCommand).installOnFirstLaunch;
+  yield* Effect.forkScoped(
+    (yield* DesktopShellEnvironment.DesktopShellEnvironment).awaitUserShellDiscovery.pipe(
+      Effect.flatMap((found) =>
+        found || environment.platform === "win32"
+          ? installCli
+          : logBootstrapInfo("skipped installing the chatandcode command without the shell PATH"),
+      ),
+    ),
+  );
 
   if (!settings.localEnvironmentEnabled) {
     yield* logBootstrapInfo("bootstrap skipping local environment (disabled in settings)");
@@ -203,6 +223,22 @@ const bootstrap = Effect.gen(function* () {
 
   if (environment.isDevelopment && Option.isNone(environment.configuredBackendPort)) {
     return yield* new DesktopDevelopmentBackendPortRequiredError();
+  }
+
+  // A backend started while another server holds this home's lock can only exit with code 78.
+  if (
+    !(settings.wslOnly && settings.wslBackendEnabled) &&
+    (yield* DesktopHomeOwner.isHomeOwnershipLocked())
+  ) {
+    const owner = yield* DesktopHomeOwner.readLiveHomeOwner();
+    yield* logBootstrapWarning("bootstrap found another server owning the ChatAndCode home", {
+      owner: Option.getOrNull(owner),
+    });
+    yield* (yield* ElectronDialog.ElectronDialog).showErrorBox(
+      "This ChatAndCode home is unavailable",
+      DesktopHomeOwner.homeOwnedMessage(owner),
+    );
+    return yield* (yield* ElectronApp.ElectronApp).quit;
   }
 
   const backendPortSelection = yield* resolveDesktopBackendPort(environment.configuredBackendPort);
@@ -246,6 +282,16 @@ const bootstrap = Effect.gen(function* () {
     }
     yield* primaryBackend.start;
     yield* logBootstrapInfo("bootstrap backend start requested");
+    // WSL-only fallback can change the primary endpoint before readiness.
+    const config = yield* primaryBackend.currentConfig;
+    if (
+      !environment.isDevelopment &&
+      !settings.wslOnly &&
+      Option.isSome(config) &&
+      Option.isNone(config.value.preflightFailure)
+    ) {
+      yield* desktopWindow.ensureMain;
+    }
     yield* appActivation.start.pipe(
       Effect.tap(() => logBootstrapInfo("desktop app control socket ready")),
       Effect.catch((error) => logStartupError("desktop app control socket unavailable", { error })),
@@ -298,12 +344,13 @@ const startup = Effect.gen(function* () {
   yield* desktopSettings.load;
 
   if (linuxElectronOptions !== null) {
+    const xdgDesktop = yield* LinuxDesktopSessionConfig;
     yield* logStartupInfo("linux password store configured", {
       passwordStore: hasCommandLinePasswordStore
         ? "command-line"
         : (linuxElectronOptions.passwordStore ?? "electron-default"),
-      xdgCurrentDesktop: process.env.XDG_CURRENT_DESKTOP ?? null,
-      xdgSessionDesktop: process.env.XDG_SESSION_DESKTOP ?? null,
+      xdgCurrentDesktop: Option.getOrNull(xdgDesktop.current),
+      xdgSessionDesktop: Option.getOrNull(xdgDesktop.session),
     });
   }
 
@@ -328,7 +375,8 @@ const startup = Effect.gen(function* () {
   yield* updates.configure;
   yield* DesktopRemoteUpdates.listen;
   yield* DesktopStartupRecovery.listen;
-  yield* linuxUrlHandler.register;
+  // Portal identity is prepared pre-ready; MIME helpers must not gate the backend or window.
+  yield* linuxUrlHandler.register.pipe(Effect.forkScoped);
   yield* bootstrap.pipe(Effect.catchCause((cause) => fatalStartupCause("bootstrap", cause)));
 }).pipe(Effect.withSpan("desktop.startup"));
 
@@ -346,6 +394,7 @@ const scopedProgram = Effect.scoped(
       stopAllPoolInstances().pipe(
         Effect.ensuring(rendererHistory.shutdown),
         Effect.ensuring(shutdown.markComplete),
+        Effect.withSpan("desktop.app.shutdown"),
       ),
     );
 

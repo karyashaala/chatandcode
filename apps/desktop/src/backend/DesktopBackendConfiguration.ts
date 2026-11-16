@@ -3,15 +3,18 @@ import * as NodeOS from "node:os";
 
 import { parsePersistedServerObservabilitySettings } from "@cctools/shared/serverSettings";
 import { currentDesktopBootstrapToken } from "@cctools/shared/desktopBootstrapToken";
+import * as HostProcess from "@cctools/shared/HostProcess";
 import * as Clock from "effect/Clock";
 import * as Context from "effect/Context";
-import * as Crypto from "effect/Crypto";
+import * as SecureRandom from "effect/crypto/SecureRandom";
+import * as Mac from "effect/crypto/Mac";
 import * as Effect from "effect/Effect";
 import * as Hex from "effect/encoding/Hex";
 import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Option from "effect/Option";
 import * as PlatformError from "effect/PlatformError";
+import * as Ref from "effect/Ref";
 import * as Schema from "effect/Schema";
 import * as SynchronizedRef from "effect/SynchronizedRef";
 
@@ -20,6 +23,7 @@ import serverPackageJson from "../../../server/package.json" with { type: "json"
 import * as DesktopBackendManager from "./DesktopBackendManager.ts";
 import * as DesktopCliShim from "../app/DesktopCliShim.ts";
 import * as DesktopEnvironment from "../app/DesktopEnvironment.ts";
+import * as DesktopState from "../app/DesktopState.ts";
 import * as DesktopServerExposure from "./DesktopServerExposure.ts";
 import * as DesktopShellEnvironment from "../shell/DesktopShellEnvironment.ts";
 import * as DesktopAppSettings from "../settings/DesktopAppSettings.ts";
@@ -487,6 +491,7 @@ const resolvePrimaryStartConfig = Effect.fn("desktop.backendConfiguration.resolv
       readonly resourceMonitorPath: Option.Option<string>;
       readonly cliPath: Option.Option<string>;
       readonly shellEnvironmentPrepared: boolean;
+      readonly desktopAppUpdate: boolean;
     },
   ): Effect.fn.Return<
     DesktopBackendManager.DesktopBackendStartConfig,
@@ -510,6 +515,7 @@ const resolvePrimaryStartConfig = Effect.fn("desktop.backendConfiguration.resolv
       tailscaleServePort: backendExposure.tailscaleServePort,
       desktopTelemetryFd: 4,
       desktopTelemetryControlFd: 5,
+      desktopAppUpdate: input.desktopAppUpdate,
       desktopBrowserFd: 6,
       desktopBrowserControlFd: 7,
       ...Option.match(input.resourceMonitorPath, {
@@ -533,6 +539,7 @@ const resolvePrimaryStartConfig = Effect.fn("desktop.backendConfiguration.resolv
       env: {
         ...backendChildEnvPatch(),
         ELECTRON_RUN_AS_NODE: "1",
+        CHATANDCODE_DESKTOP_SHELL_DISCOVERY_PENDING: "1",
         CHATANDCODE_CLI_PATH: Option.getOrUndefined(input.cliPath),
       },
       extendEnv: true,
@@ -561,6 +568,7 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
   const environment = yield* DesktopEnvironment.DesktopEnvironment;
   const wslEnvironment = yield* DesktopWslEnvironment.DesktopWslEnvironment;
   const fileSystem = yield* FileSystem.FileSystem;
+  const env = yield* HostProcess.Environment;
 
   // wslhost loopback forwarding is unreliable on some Windows hosts; advertise the WSL IP instead.
   const wslBindHost = "0.0.0.0";
@@ -632,7 +640,7 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
   const forwardedEnv: Record<string, string> = {};
   const forwardedEnvNames: string[] = [];
   for (const name of WSL_FORWARDED_ENV_NAMES) {
-    const value = process.env[name];
+    const value = env[name];
     if (value !== undefined && value.length > 0) {
       forwardedEnv[name] = value;
       forwardedEnvNames.push(name);
@@ -640,7 +648,7 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
   }
 
   const parentEnvWithoutT3Home: Record<string, string | undefined> = {};
-  for (const [key, value] of Object.entries(process.env)) {
+  for (const [key, value] of Object.entries(env)) {
     if (key === "CHATANDCODE_HOME") continue;
     parentEnvWithoutT3Home[key] = value;
   }
@@ -657,7 +665,7 @@ const resolveWslStartConfig = Effect.fn("desktop.backendConfiguration.resolveWsl
       ...forwardedEnv,
       ...(wslEnv !== undefined ? { WSLENV: wslEnv } : {}),
     },
-    // env already excludes CHATANDCODE_HOME; merging process.env would restore it.
+    // env already excludes CHATANDCODE_HOME; merging the host env would restore it.
     extendEnv: false,
     bootstrap,
     bootstrapDelivery: "stdin" as const,
@@ -723,14 +731,16 @@ export const make = Effect.gen(function* () {
   const wslEnvironment = yield* DesktopWslEnvironment.DesktopWslEnvironment;
   const wslServerTree = yield* DesktopWslServerTree.DesktopWslServerTree;
   const settings = yield* DesktopAppSettings.DesktopAppSettings;
-  const crypto = yield* Crypto.Crypto;
+  const desktopState = yield* DesktopState.DesktopState;
+  const mac = yield* Mac.Mac;
+  const random = yield* SecureRandom.SecureRandom;
   // Random generation yields; serialize it so concurrent backends cannot capture distinct bootstrap secrets.
   const secretRef = yield* SynchronizedRef.make(Option.none<string>());
   const getOrCreateBootstrapSecret = SynchronizedRef.modifyEffect(secretRef, (current) =>
     Option.match(current, {
       onSome: (secret) => Effect.succeed([secret, current] as const),
       onNone: () =>
-        crypto.randomBytes(32).pipe(
+        random.randomBytes(32).pipe(
           Effect.map((bytes) => {
             const secret = Hex.encode(bytes);
             return [secret, Option.some(secret)] as const;
@@ -741,10 +751,10 @@ export const make = Effect.gen(function* () {
 
   const sharedInputs = Effect.gen(function* () {
     const bootstrapSecret = yield* getOrCreateBootstrapSecret;
-    const bootstrapToken = currentDesktopBootstrapToken(
+    const bootstrapToken = yield* currentDesktopBootstrapToken(
       bootstrapSecret,
       yield* Clock.currentTimeMillis,
-    );
+    ).pipe(Effect.provideService(Mac.Mac, mac));
     const observabilitySettings = yield* readBackendObservabilitySettings.pipe(
       Effect.provideService(FileSystem.FileSystem, fileSystem),
       Effect.provideService(DesktopEnvironment.DesktopEnvironment, environment),
@@ -789,6 +799,7 @@ export const make = Effect.gen(function* () {
       resourceMonitorPath,
       cliPath,
       shellEnvironmentPrepared,
+      desktopAppUpdate: yield* Ref.get(desktopState.canInstallUpdates),
     }).pipe(
       Effect.provideService(DesktopEnvironment.DesktopEnvironment, environment),
       Effect.provideService(DesktopServerExposure.DesktopServerExposure, serverExposure),
@@ -806,7 +817,9 @@ export const make = Effect.gen(function* () {
 
   const currentBootstrapToken = Effect.gen(function* () {
     const secret = yield* getOrCreateBootstrapSecret;
-    return currentDesktopBootstrapToken(secret, yield* Clock.currentTimeMillis);
+    return yield* currentDesktopBootstrapToken(secret, yield* Clock.currentTimeMillis).pipe(
+      Effect.provideService(Mac.Mac, mac),
+    );
   });
 
   return DesktopBackendConfiguration.of({

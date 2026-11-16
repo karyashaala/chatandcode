@@ -1,3 +1,4 @@
+import { parsePullRequestAnchor } from "@cctools/shared/pullRequestAnchor";
 import { resolveChangeRequestLinkTarget } from "@cctools/client-runtime/change-request-links";
 import type { EnvironmentProject } from "@cctools/client-runtime/state/shell";
 import { EnvironmentId, ProjectId } from "@cctools/contracts";
@@ -24,6 +25,7 @@ export function nativePullRequestDestination(
     projectId: String(target.project.id),
     repository: target.repository,
     number: target.number,
+    ...(parsePullRequestAnchor(url) ? { navigationUrl: url } : {}),
     ...(target.host === undefined ? {} : { host: target.host }),
   };
 }

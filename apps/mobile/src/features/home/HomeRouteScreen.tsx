@@ -1,13 +1,12 @@
 import { uuidv4 } from "../../lib/uuid";
 import { ThreadUndoNotice } from "./ThreadUndoNotice";
-import { Toolbar } from "../../components/ui/Toolbar";
 import { use } from "react";
 import { NativePrimaryColumnContext } from "../../native/v5-workspace-context";
 import * as Arr from "effect/Array";
 import * as Order from "effect/Order";
 import { useNavigation } from "@react-navigation/native";
 import { useMemo, useState } from "react";
-import { Platform, useWindowDimensions } from "react-native";
+import { Platform } from "react-native";
 
 import { resolveChatsProjectKeys } from "@cctools/client-runtime/state/projects";
 import type { EnvironmentThreadShell } from "@cctools/client-runtime/state/shell";
@@ -16,46 +15,41 @@ import {
   resolveScratchProjectScopeKey,
 } from "@cctools/client-runtime/state/project-grouping";
 
-import { NativeStackScreenOptions } from "../../native/StackHeader";
 import { useProjects, useServerConfigs } from "../../state/entities";
 import { environmentThreadShells } from "../../state/threads";
-import { usePendingNewTasks } from "../../state/use-pending-new-tasks";
+import { useLaunchingThreads, usePendingNewTasks } from "../../state/use-pending-new-tasks";
 import { useWorkspaceState } from "../../state/workspace";
 import { useSavedRemoteConnections } from "../../state/use-remote-environment-registry";
-import { useAdaptiveWorkspaceLayout } from "../layout/AdaptiveWorkspaceLayout";
-import { useDeviceType, useNativeColumnLayoutMetrics } from "../../native/native-layout-metrics";
-import { WorkspaceEmptyDetail } from "../layout/WorkspaceEmptyDetail";
-import { AndroidScreenHeader } from "../../components/ui/AndroidScreenHeader";
+import {
+  useAdaptiveWorkspaceLayout,
+  useWorkspacePaneState,
+} from "../layout/AdaptiveWorkspaceLayout";
 import { AndroidHomeFabLayout } from "./AndroidHomeFab";
 import { HomeScreen } from "./HomeScreen";
-import { HomeHeader } from "./HomeHeader";
 import { HomeSectionTabs, useHomeSectionSummary, useStartNewThread } from "./HomeSectionTabs";
 import { useHomeListOptions, useHomeListSection } from "./home-list-options";
 import { useAtomValueWhileVisible, useHomeRouteVisible } from "./home-route-visibility";
 import { buildHomeProjectScopes } from "./homeThreadList";
 import { usePendingTaskListActions } from "./usePendingTaskListActions";
 import { useThreadListActions } from "./useThreadListActions";
-import { getConnectionAwareBrandHeaderOptions } from "./WorkspaceConnectionTitle";
-import { useWorkspaceTabs } from "../workspace/WorkspaceTabsContext";
+import { useWorkspaceTabs } from "../layout/workspace/WorkspaceTabsContext";
 import { openSettings } from "../settings/settings-navigation";
-import { useSelectWorkspaceTab } from "../workspace/useSelectWorkspaceTab";
-import { useSelectWorkspaceDetail } from "../workspace/useSelectWorkspaceDetail";
+import { useSelectWorkspaceTab } from "../layout/workspace/useSelectWorkspaceTab";
+import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
+import { WorkspaceListEmptyDetail } from "../layout/workspace/WorkspaceListEmptyDetail";
+import { WorkspaceListHeader } from "../layout/workspace/WorkspaceListHeader";
+import { buildHomeListFilterMenuItems } from "./home-list-filter-menu";
 
 export function HomeRouteScreen() {
-  const { width: windowWidth } = useWindowDimensions();
   const nativePrimaryColumn = use(NativePrimaryColumnContext);
-  const columnMetrics = useNativeColumnLayoutMetrics();
-  const deviceType = useDeviceType();
-  const headerWidth = nativePrimaryColumn ? (columnMetrics?.width ?? windowWidth) : windowWidth;
-  const { layout, panes, primarySidebarSearchQuery, setPrimarySidebarSearchQuery, startNewTask } =
-    useAdaptiveWorkspaceLayout();
+  const { layout, setPrimarySidebarSearchQuery, startNewTask } = useAdaptiveWorkspaceLayout();
+  const { primarySidebarSearchQuery } = useWorkspacePaneState();
   const selectDetail = useSelectWorkspaceDetail();
   const projects = useProjects();
   // Stop rebuilding the streaming thread list while Thread covers Home.
   const visible = useHomeRouteVisible();
-  const threads = useAtomValueWhileVisible(
-    environmentThreadShells.navigationThreadShellsAtom,
-    visible,
+  const threads = useLaunchingThreads(
+    useAtomValueWhileVisible(environmentThreadShells.navigationThreadShellsAtom, visible),
   );
   const { environments: workspaceEnvironments, state: catalogState } = useWorkspaceState();
   const { savedConnectionsById } = useSavedRemoteConnections();
@@ -134,13 +128,20 @@ export function HomeRouteScreen() {
   const { section, setSection, chatsSupported } = useHomeListSection();
   // Each environment's Chats project, found by its folder like Scratch.
   const serverConfigs = useServerConfigs();
-  const chatsWorkspaceRoots = new Map(
-    Array.from(
-      serverConfigs,
-      ([environmentId, config]) => [environmentId, config.chatsWorkspaceRoot] as const,
-    ),
+  const chatsWorkspaceRoots = useMemo(
+    () =>
+      new Map(
+        Array.from(
+          serverConfigs,
+          ([environmentId, config]) => [environmentId, config.chatsWorkspaceRoot] as const,
+        ),
+      ),
+    [serverConfigs],
   );
-  const chatsProjectKeys = resolveChatsProjectKeys(projects, serverConfigs);
+  const chatsProjectKeys = useMemo(
+    () => resolveChatsProjectKeys(projects, serverConfigs),
+    [projects, serverConfigs],
+  );
   const sectionSummary = useHomeSectionSummary({
     threads,
     chatsProjectKeys,
@@ -180,91 +181,48 @@ export function HomeRouteScreen() {
 
   if (layout.usesSplitView && !nativePrimaryColumn) {
     return (
-      <>
-        <NativeStackScreenOptions
-          options={
-            Platform.OS === "android"
-              ? { headerShown: false }
-              : {
-                  title: "",
-                  headerTitle: "",
-                  unstable_headerLeftItems: () => [],
-                  headerSearchBarOptions: undefined,
-                  unstable_headerRightItems: () => [],
-                  unstable_headerToolbarItems: () => [],
-                }
-          }
-        />
-        {Platform.OS === "ios" ? (
-          <Toolbar placement="left">
-            <Toolbar.Button
-              accessibilityLabel="New task"
-              icon="square.and.pencil"
-              onPress={startNewTask}
-            />
-          </Toolbar>
-        ) : null}
-        {Platform.OS === "android" ? <AndroidScreenHeader title="Threads" /> : null}
-        <WorkspaceEmptyDetail
-          onAddConnection={
-            Platform.OS === "android" && !catalogState.hasConnections
-              ? () => openSettings(navigation, "SettingsEnvironmentNew")
-              : undefined
-          }
-          onStartNewTask={
-            Platform.OS === "android" && panes.primarySidebarVisible ? undefined : startNewTask
-          }
-        />
-      </>
+      <WorkspaceListEmptyDetail
+        hasConnections={catalogState.hasConnections}
+        onAddConnection={() => openSettings(navigation, "SettingsEnvironmentNew")}
+        onStartNewTask={startNewTask}
+      />
     );
   }
 
   return (
-    <AndroidHomeFabLayout
-      disabled={workspace !== null && Platform.OS !== "android"}
-      onStartNewTask={startNewThread}
-    >
+    <AndroidHomeFabLayout onStartNewTask={startNewThread}>
       <>
-        {/* Screen options merge shallowly; restore the header after split view. */}
-        {workspace !== null && Platform.OS === "ios" ? null : (
-          <NativeStackScreenOptions
-            // The brand slot carries the Chat / Code tabs, so their state
-            // reapplies the header like a width change does.
-            optionsVersion={[headerWidth, chatsSupported, section, sectionSummary]}
-            options={{
-              ...getConnectionAwareBrandHeaderOptions({
-                headerWidth,
-                trailingItemCount: nativePrimaryColumn && deviceType === "pad" ? 2 : 1,
-                onOpenEnvironments: () => openSettings(navigation, "SettingsEnvironments"),
-                tabs: chatsSupported ? (
-                  <HomeSectionTabs
-                    section={section}
-                    chat={sectionSummary.chat}
-                    code={sectionSummary.code}
-                    onSelect={setSection}
-                  />
-                ) : undefined,
-              }),
-              headerShown: Platform.OS !== "android",
-            }}
-          />
-        )}
-        <HomeHeader
-          environments={environments}
-          projects={section === "chat" ? [] : projectFilterOptions}
-          searchQuery={searchQuery}
-          searchPlaceholder={section === "chat" ? "Search chats" : "Search"}
-          selectedEnvironmentId={selectedEnvironmentId}
-          selectedProjectKey={selectedProjectKey}
-          section={section}
-          sectionSummary={chatsSupported ? sectionSummary : null}
-          onSectionChange={setSection}
-          onEnvironmentChange={setSelectedEnvironmentId}
-          onProjectChange={setSelectedProjectKey}
+        <WorkspaceListHeader
+          accessibilityLabel="ChatAndCode, Threads"
+          tabs={
+            chatsSupported ? (
+              <HomeSectionTabs
+                section={section}
+                chat={sectionSummary.chat}
+                code={sectionSummary.code}
+                onSelect={setSection}
+              />
+            ) : undefined
+          }
           onOpenEnvironments={() => openSettings(navigation, "SettingsEnvironments")}
-          onOpenSettings={() => selectTab("settings")}
-          onSearchQueryChange={setSearchQuery}
-          onStartNewTask={startNewThread}
+          search={{
+            value: searchQuery,
+            onChangeText: setSearchQuery,
+            placeholder: section === "chat" ? "Search chats" : "Search",
+            accessibilityLabel: "Search threads",
+          }}
+          filter={{
+            customized:
+              selectedEnvironmentId !== null || (section !== "chat" && selectedProjectKey !== null),
+            items: buildHomeListFilterMenuItems({
+              environments,
+              projects: section === "chat" ? [] : projectFilterOptions,
+              selectedEnvironmentId,
+              selectedProjectKey,
+              onEnvironmentChange: setSelectedEnvironmentId,
+              onProjectChange: setSelectedProjectKey,
+            }),
+          }}
         />
 
         <HomeScreen

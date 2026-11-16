@@ -1,4 +1,3 @@
-import type { NativeStackNavigationOptions } from "@react-navigation/native-stack";
 import { createContext, use, useEffect, useState, type ReactNode } from "react";
 import { Animated, Platform, Pressable, View } from "react-native";
 
@@ -6,12 +5,6 @@ import { AppActivityIndicator } from "../../components/ui/AppActivityIndicator";
 import { SymbolView } from "../../components/ui/AppSymbol";
 import { AppText as Text } from "../../components/ui/AppText";
 import { useAndroidControlSizing } from "../../components/ui/useAndroidControlSizing";
-import { Wordmark } from "../../components/Wordmark";
-import {
-  brandTitleOffset,
-  CompactBrandTitle,
-  getCompactBrandHeaderOptions,
-} from "../../components/CompactBrandTitle";
 import { useDeadlinePassed } from "../../lib/clock";
 import { useWorkspaceState } from "../../state/workspace";
 import {
@@ -159,42 +152,4 @@ export function WorkspaceConnectionTitle(props: {
       </Pressable>
     </StatusFadeIn>
   );
-}
-
-export function getConnectionAwareBrandHeaderOptions(opts: {
-  readonly headerWidth: number;
-  readonly trailingItemCount?: number;
-  readonly onOpenEnvironments: () => void;
-  readonly fallbackTitleStyle?: NativeStackNavigationOptions["headerTitleStyle"];
-  /** Home's Chat / Code tabs, drawn beside the brand. */
-  readonly tabs?: ReactNode;
-}): NativeStackNavigationOptions {
-  const maxWidth = Math.max(0, opts.headerWidth - 64 - 44 * (opts.trailingItemCount ?? 1));
-
-  return {
-    ...getCompactBrandHeaderOptions(opts.fallbackTitleStyle),
-    headerTitle: () =>
-      opts.tabs === undefined ? (
-        <WorkspaceConnectionTitle
-          brand={<CompactBrandTitle />}
-          maxWidth={maxWidth}
-          onPress={opts.onOpenEnvironments}
-          statusOffset={brandTitleOffset()}
-        />
-      ) : (
-        // The tabs share the width budget, so the brand steps down to its mark
-        // and a reconnect status shrinks in the mark's place, never the tabs.
-        <View className="flex-row items-center gap-3" style={{ maxWidth }}>
-          <View className="min-w-0 shrink">
-            <WorkspaceConnectionTitle
-              brand={<Wordmark colorClassName="accent-icon" height={15} />}
-              grow
-              onPress={opts.onOpenEnvironments}
-              statusOffset={brandTitleOffset()}
-            />
-          </View>
-          {opts.tabs}
-        </View>
-      ),
-  };
 }

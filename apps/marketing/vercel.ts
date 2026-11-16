@@ -7,6 +7,8 @@ export const config: VercelConfig = {
   installCommand: "npm install -g vite-plus && vp install --filter '@cctools/marketing...'",
   buildCommand: "vp run --filter @cctools/marketing build",
   outputDirectory: "dist",
+  // One URL per page: `/download/` and `/download` both served 200 before, which splits ranking signals.
+  trailingSlash: false,
   // curl | sh requires plain, uncompressed scripts with no cache across deploys.
   headers: [
     {
@@ -29,6 +31,12 @@ export const config: VercelConfig = {
       source: "/app",
       destination: "https://app.chatcode.ca",
       permanent: true,
+    },
+    // ChatAndCode's mobile apps are not in the stores yet, so the desktop app's QR code opens /download.
+    {
+      source: "/mobile",
+      destination: "/download",
+      permanent: false,
     },
   ],
 };

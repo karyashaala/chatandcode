@@ -10,7 +10,9 @@ import { assert, it } from "vite-plus/test";
 import desktopConfig from "../vite.config.ts";
 
 it("keeps lazy Linux imports and worker bundles from executing desktop startup twice", async () => {
-  const directory = await NodeFSP.mkdtemp(NodePath.join(NodeOS.tmpdir(), "t3-desktop-bundle-"));
+  const directory = await NodeFSP.mkdtemp(
+    NodePath.join(NodeOS.tmpdir(), "chatandcode-desktop-bundle-"),
+  );
   try {
     const workerEntries = [
       "src/electron/WindowsForegroundFocusWorker.ts",
@@ -112,27 +114,21 @@ void import("./linux.ts").then(({ result }) => process.emit("ready", result));`,
 });
 
 it("loads the emitted packaged boot entry and backend cache preload", async () => {
-  const directory = await NodeFSP.mkdtemp(NodePath.join(NodeOS.tmpdir(), "t3-desktop-boot-"));
+  const directory = await NodeFSP.mkdtemp(
+    NodePath.join(NodeOS.tmpdir(), "chatandcode-desktop-boot-"),
+  );
   try {
     const entries = ["src/boot.ts", "src/compileCache.ts"];
-    await NodeFSP.mkdir(NodePath.join(directory, "src"));
-    await NodeFSP.mkdir(NodePath.join(directory, "node_modules/@cctools"), { recursive: true });
-    await NodeFSP.symlink(
-      NodeURL.fileURLToPath(new URL("../../../packages/shared", import.meta.url)),
-      NodePath.join(directory, "node_modules/@cctools/shared"),
-      "junction",
-    );
-    await Promise.all(
-      entries.map((entry) =>
-        NodeFSP.copyFile(new URL(`../${entry}`, import.meta.url), NodePath.join(directory, entry)),
-      ),
-    );
     assert.ok(Array.isArray(desktopConfig.pack));
     for (const packConfig of desktopConfig.pack) {
       if (!Array.isArray(packConfig.entry)) continue;
       if (!packConfig.entry.some((entry) => entries.includes(entry))) continue;
       await build({
         ...packConfig,
+        entry: packConfig.entry.map((entry) =>
+          NodeURL.fileURLToPath(new URL(`../${entry}`, import.meta.url)),
+        ),
+        outDir: NodePath.join(directory, "dist-electron"),
         config: false,
         cwd: directory,
         tsconfig: false,

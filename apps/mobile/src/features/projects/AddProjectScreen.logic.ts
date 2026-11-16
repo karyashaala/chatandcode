@@ -1,6 +1,22 @@
 import { canCreateProjectInEnvironment } from "@cctools/client-runtime/operations/projects";
 import type { EnvironmentConnectionPhase } from "@cctools/client-runtime/connection";
-import type { EnvironmentId } from "@cctools/contracts";
+import { type EnvironmentId, FilesystemBrowseError } from "@cctools/contracts";
+import * as Schema from "effect/Schema";
+
+const isFilesystemBrowseError = Schema.is(FilesystemBrowseError);
+
+/** Clone destinations may name folders that do not exist yet; cloning creates them. */
+export function isMissingCloneParentBrowseFailure(input: {
+  readonly cloning: boolean;
+  readonly failure: unknown;
+}): boolean {
+  return (
+    input.cloning &&
+    isFilesystemBrowseError(input.failure) &&
+    input.failure.failure === "read_directory_failed" &&
+    input.failure.pathMissing === true
+  );
+}
 
 export function resolveAddProjectEnvironment<
   T extends {

@@ -74,6 +74,7 @@ const contextInput = {
     logsDir: "/home/u/.chatandcode/userdata/logs",
     serviceLogPath: "/home/u/.chatandcode/userdata/logs/boot-service.log",
     desktopBackendLogGlob: "/home/u/.chatandcode/userdata/logs/server-child*.log*",
+    relayClientLogPath: "/home/u/.chatandcode/userdata/logs/relay-client.ndjson",
     serverTracePath: "/home/u/.chatandcode/userdata/logs/server.trace.ndjson",
     providerEventLogPath: "/home/u/.chatandcode/userdata/logs/provider/events.log",
     terminalLogsDir: "/home/u/.chatandcode/userdata/logs/terminals",

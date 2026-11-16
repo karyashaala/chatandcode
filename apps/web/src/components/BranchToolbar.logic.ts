@@ -5,9 +5,12 @@ import type {
   ProjectId,
   WorktreeSubmodules,
 } from "@cctools/contracts";
+import type { ThreadStructureRuntime } from "@cctools/client-runtime/state/shell";
 import * as Schema from "effect/Schema";
 import { sanitizeNewRefName } from "@cctools/shared/git";
+import { workspaceRelativeFilePath } from "@cctools/shared/path";
 import { toSortableTimestamp } from "@cctools/client-runtime/state/thread-sort";
+import { deriveCanInterruptRunningThread } from "../session-logic";
 export { deriveLocalBranchNameFromRemoteRef, sanitizeNewRefName } from "@cctools/shared/git";
 
 export interface EnvironmentOption {
@@ -109,7 +112,7 @@ export function resolveLockedWorkspaceLabel(
   activeWorktreePath: string | null,
   effectiveEnvMode: EnvMode,
 ): string {
-  if (activeWorktreePath) return "Worktree";
+  if (activeWorktreePath) return activeWorktreePath.split(/[\\/]/).findLast(Boolean) ?? "Worktree";
   return effectiveEnvMode === "worktree" ? resolveEnvModeLabel("worktree") : "Local checkout";
 }
 
@@ -250,6 +253,7 @@ export function resolveLocalCheckoutBranchMismatch(input: {
 
 export function resolveBranchSelectionTarget(input: {
   activeProjectCwd: string;
+  activeProjectCheckoutRoot?: string | undefined;
   activeWorktreePath: string | null;
   refName: Pick<VcsRef, "isDefault" | "worktreePath">;
 }): {
@@ -260,9 +264,14 @@ export function resolveBranchSelectionTarget(input: {
   const { activeProjectCwd, activeWorktreePath, refName } = input;
 
   if (refName.worktreePath) {
+    // Until the project's checkout root loads, a checkout containing the project counts as its own.
+    const isProjectCheckout =
+      input.activeProjectCheckoutRoot === undefined
+        ? workspaceRelativeFilePath(activeProjectCwd, refName.worktreePath) !== null
+        : workspaceRelativeFilePath(input.activeProjectCheckoutRoot, refName.worktreePath) === ".";
     return {
       checkoutCwd: refName.worktreePath,
-      nextWorktreePath: refName.worktreePath === activeProjectCwd ? null : refName.worktreePath,
+      nextWorktreePath: isProjectCheckout ? null : refName.worktreePath,
       reuseExistingWorktree: true,
     };
   }
@@ -275,6 +284,17 @@ export function resolveBranchSelectionTarget(input: {
     nextWorktreePath,
     reuseExistingWorktree: false,
   };
+}
+
+export function isWorktreeChangeBlocked(input: {
+  runtime: ThreadStructureRuntime | null;
+  currentWorktreePath: string | null;
+  nextWorktreePath: string | null;
+}): boolean {
+  return (
+    input.nextWorktreePath !== input.currentWorktreePath &&
+    deriveCanInterruptRunningThread(true, input.runtime)
+  );
 }
 
 export function shouldIncludeBranchPickerItem(input: {

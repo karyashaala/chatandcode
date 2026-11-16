@@ -9,12 +9,13 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 
 import { AppText as Text } from "../../components/ui/AppText";
+import { AppBar } from "../../components/ui/AppBar";
 import * as Dialog from "../../components/ui/Dialog";
-import { NativeStackScreenOptions } from "../../native/StackHeader";
 import { useServerConfigs } from "../../state/entities";
 import { projectEnvironment } from "../../state/projects";
 import { useAtomCommand } from "../../state/use-atom-command";
 import { useRemoteConnectionStatus } from "../../state/use-remote-environment-registry";
+import { useWorkspaceBackNavigation } from "../layout/workspace/useAndroidWorkspaceNavigation";
 import { useNewTaskFlow } from "./new-task-flow-provider";
 import { NewTaskDraftScreen } from "./NewTaskDraftScreen";
 import { ThreadScreenFallback } from "./ThreadScreenHost";
@@ -26,6 +27,7 @@ import { ThreadScreenFallback } from "./ThreadScreenHost";
  */
 export function NewChatDraftScreen() {
   const navigation = useNavigation();
+  const goBack = useWorkspaceBackNavigation("threads");
   const { isChatsDraft, selectedEnvironmentId, setProject } = useNewTaskFlow();
   const serverConfigs = useServerConfigs();
   const { connectedEnvironments } = useRemoteConnectionStatus();
@@ -83,8 +85,7 @@ export function NewChatDraftScreen() {
 
   if (chatsProject !== null && isChatsDraft) return <NewTaskDraftScreen />;
   return (
-    <ThreadScreenFallback>
-      <NativeStackScreenOptions options={{ title: "New chat" }} />
+    <ThreadScreenFallback header={<AppBar title="New chat" onBack={goBack} />}>
       <View className="flex-1 items-center justify-center gap-3 bg-screen px-8">
         {environmentId === null ? (
           <Text className="text-center text-foreground-muted">

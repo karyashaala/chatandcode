@@ -13,6 +13,8 @@ import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
 import * as Path from "effect/Path";
 import * as PlatformError from "effect/PlatformError";
+import * as Config from "effect/Config";
+import * as Option from "effect/Option";
 import * as Effect from "effect/Effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
@@ -1489,12 +1491,24 @@ const runScenario = Effect.fn("record-codex-app-server-replay-fixture.runScenari
   yield* recorder.flush();
 });
 
+const RecorderEnv = Config.all({
+  CHATANDCODE_CODEX_REPLAY_OUT_DIR: Config.String("CHATANDCODE_CODEX_REPLAY_OUT_DIR").pipe(
+    Config.option,
+    Config.map(Option.getOrUndefined),
+  ),
+  CHATANDCODE_CODEX_REPLAY_OUT: Config.String("CHATANDCODE_CODEX_REPLAY_OUT").pipe(
+    Config.option,
+    Config.map(Option.getOrUndefined),
+  ),
+});
+
 const program = Effect.gen(function* () {
+  const recorderEnv = yield* RecorderEnv;
   const path = yield* Path.Path;
   const requestedScenarios = parseScenarios();
   const allScenarios = scenarios();
-  const outDir = readArgValue("--out-dir") ?? process.env.CHATANDCODE_CODEX_REPLAY_OUT_DIR;
-  const singleOutPath = readArgValue("--out") ?? process.env.CHATANDCODE_CODEX_REPLAY_OUT;
+  const outDir = readArgValue("--out-dir") ?? recorderEnv.CHATANDCODE_CODEX_REPLAY_OUT_DIR;
+  const singleOutPath = readArgValue("--out") ?? recorderEnv.CHATANDCODE_CODEX_REPLAY_OUT;
   const selected = allScenarios.filter((scenario) => requestedScenarios.includes(scenario.name));
 
   if (selected.length === 0) {

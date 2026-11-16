@@ -20,20 +20,23 @@ On Windows, in PowerShell:
 irm https://chatcode.ca/install.ps1 | iex
 ```
 
-This puts `chatandcode` in `~/.local/bin`. If your shell reports `command not found`
-afterwards, that directory is not on your `PATH` yet; the installer prints the
-line to add. Set `CHATANDCODE_CHANNEL=nightly` to install the nightly train, or
+This installs the `chatandcode` binary to `~/.local/bin`. If that folder is not on your
+`PATH` yet, the installer says so and, for zsh, bash on Linux, and fish, prints
+a command to add it. On Windows, `chatandcode` works in the same PowerShell window right
+away; add the folder to your `PATH` for new windows. If a `chatandcode` that the
+installer or the desktop app did not create is already there, it leaves that
+one alone and stops. Set `CHATANDCODE_CHANNEL=nightly` to install the nightly train, or
 `CHATANDCODE_VERSION` to pin an exact version.
 
-| Task                                             | Command                                                                          |
-| ------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Start the server and open the web app            | `chatandcode`                                                                    |
-| Start the server without a browser               | `chatandcode serve`                                                              |
-| Use it from your other devices                   | `chatandcode up` ([details](./remote-access.md))                                 |
-| Keep it running in the background (macOS, Linux) | `chatandcode service install` ([details](./background-service.md))               |
-| Move to the newest release                       | `chatandcode update`                                                             |
-| Reclaim database space                           | `chatandcode doctor` ([details](./background-service.md#reclaim-database-space)) |
-| Remove it again                                  | `chatandcode uninstall`                                                          |
+| Task                                  | Command                                                                          |
+| ------------------------------------- | -------------------------------------------------------------------------------- |
+| Start the server and open the web app | `chatandcode`                                                                    |
+| Start the server without a browser    | `chatandcode serve`                                                              |
+| Use it from your other devices        | `chatandcode up` ([details](./remote-access.md))                                 |
+| Keep it running in the background     | `chatandcode service install` ([details](./background-service.md))               |
+| Move to the newest release            | `chatandcode update`                                                             |
+| Reclaim database space                | `chatandcode doctor` ([details](./background-service.md#reclaim-database-space)) |
+| Remove it again                       | `chatandcode uninstall`                                                          |
 
 Run `chatandcode help` or `chatandcode --help` for the full reference. To start in a new working
 directory, use an explicit path such as `chatandcode ./my-project`. A bare directory name
@@ -44,7 +47,11 @@ instead. Stop it before starting a replacement, or use a different `--base-dir`
 for an independent server.
 
 To try ChatAndCode once without installing it, run `npx chatandcode@latest` instead (needs
-Node.js for `npx`).
+Node.js for `npx`). It offers to install the `chatandcode` command first. If you say no,
+it asks again at the next minor release, and `npx chatandcode install` installs it later.
+`npx chatandcode` always runs the version npm picked, even when a `chatandcode` is installed. On
+the nightly train, run your installed `chatandcode` (for example `chatandcode connect`), not
+`npx chatandcode`, which runs the latest stable release.
 
 ### Intel Macs
 
@@ -68,18 +75,35 @@ Winget, Homebrew, and AUR packages are coming. Nightly builds are available from
 
 On Debian or Ubuntu, install the downloaded package with `sudo apt install ./ChatAndCode-*.deb`.
 
+### Linux
+
+AppImage and `.deb` downloads are available for x86_64 and ARM64. Check your
+architecture with `uname -m`: for `x86_64`, choose a file ending in
+`x86_64.AppImage` or `amd64.deb`; for `aarch64`, choose `arm64.AppImage` or
+`arm64.deb`.
+
+To launch an AppImage, open a terminal in its download folder. Replace
+`ChatAndCode.AppImage` below with the exact filename you downloaded:
+
+```bash
+chmod +x ./ChatAndCode.AppImage
+./ChatAndCode.AppImage
+```
+
 The `.deb` updates itself like the other desktop builds. It asks for your
 password to install each update. If your desktop has no password prompt, the
 update fails. Download the new `.deb` and install it the same way.
 
 ### The `chatandcode` command
 
-The desktop app includes the `chatandcode` command-line tool. To run it from any
-terminal, open **Settings → About** and choose **Install** next to
-**chatandcode command**. On macOS and Linux it adds a `chatandcode` link to a folder on your
-`PATH`; on Windows it adds the app's command folder to your `PATH`. Open a new
-terminal afterwards. **Remove** takes it off again. If you already have `chatandcode`
-from npm, it stays as it is.
+The desktop app includes the `chatandcode` command-line tool. A new install sets it up
+on first launch; after an update, or any time, choose **Install** next to
+**chatandcode command** in **Settings → About**. On macOS and Linux it adds a `chatandcode` link
+in `~/.local/bin` (or `~/bin`); on Windows it adds the app's command folder to
+your `PATH`. Open a new terminal afterwards. If the folder is not on your
+`PATH`, **Add to PATH** on the Welcome page or in **Settings → About** adds one
+line to your shell's startup file. **Remove** takes it off, and the app does not
+add it again. If you already have another `chatandcode`, it stays as it is.
 
 ### Windows Subsystem for Linux
 
@@ -126,6 +150,7 @@ computer.
 | Claude      | Install [Claude Code](https://claude.com/product/claude-code), then run `claude auth login`.                                                              |
 | Cursor      | Install [Cursor CLI](https://cursor.com/cli), then run `agent login`.                                                                                     |
 | Grok Build  | Install [Grok Build CLI](https://x.ai/cli), then run `grok login`.                                                                                        |
+| Kiro        | Install [Kiro CLI](https://kiro.dev/docs/cli/), then run `kiro-cli login`.                                                                                |
 | OpenCode    | Install [OpenCode](https://opencode.ai), then run `opencode auth login`.                                                                                  |
 | Antigravity | Install and sign in with Google from ChatAndCode's provider settings.                                                                                     |
 | Pi          | Install [Pi](./providers-pi.md#set-up-pi) with Node.js 22.19 or newer, then run `pi` and `/login`.                                                        |
@@ -146,11 +171,17 @@ on the environment's machine. An unlisted version is unverified.
 
 When a provider CLI is behind its latest release, its provider card shows the
 available version. **Update now** runs the installer that owns the CLI
-(Homebrew, or a global npm, pnpm, Yarn, Bun, Volta, or Vite+ install), or the
-CLI's own update command when ChatAndCode cannot tell. Update a CLI installed with
-mise through mise. Cursor and Antigravity update with ChatAndCode. Homebrew installs
-compare against the version Homebrew offers, which can trail the npm release by
-a few hours.
+(Homebrew, mise, or a global npm, pnpm, Yarn, Bun, Volta, or Vite+ install), or
+the CLI's own update command when ChatAndCode cannot tell. Claude, Codex, and
+OpenCode installs ChatAndCode cannot identify stay manual: update them through the
+installer you used. ChatAndCode runs `mise upgrade`
+only for a tool your mise config requests as `latest` when the provider's binary
+path is a mise shim or under the tool's `installs/<tool>/latest` link; update a
+pinned version, or a path into one version's directory, through mise yourself.
+Update a CLI installed with Nix through Nix.
+Cursor and Antigravity update with ChatAndCode. Homebrew and Chocolatey installs
+compare against the version their package manager offers, which can trail the
+npm release; update Claude installed with Chocolatey through Chocolatey.
 
 Add another provider instance for a separate account or configuration. Each
 instance can have its own environment variables, such as API keys or a custom
@@ -159,13 +190,14 @@ their original values.
 
 For provider-specific setup and accounts, see [Codex](./providers-codex.md),
 [Claude](./providers-claude.md), [OpenCode](./providers-opencode.md),
-[Antigravity](./providers-antigravity.md), [Pi](./providers-pi.md),
-[Muse Code](./providers-muse.md), and [fx](./providers-fx.md).
+[Antigravity](./providers-antigravity.md), [Kiro](./providers-kiro.md),
+[Pi](./providers-pi.md), [Muse Code](./providers-muse.md), and [fx](./providers-fx.md).
 
 ## Next steps
 
 - [Working with threads](./thread-sidebar.md): start tasks and organize parallel work.
 - [Permission modes](./permission-modes.md): choose when agents ask before acting.
 - [Remote access](./remote-access.md): connect from another device.
-- [Running in the background](./background-service.md): keep a Linux or macOS host available.
+- [Running in the background](./background-service.md): keep a host available.
 - [Updating ChatAndCode](./updating.md): update the app and connected servers.
+- [Managed policy](./managed-policy.md): configure ChatAndCode for everyone on a machine.

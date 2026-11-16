@@ -5,10 +5,10 @@ description: Test ChatAndCode's web and desktop UI through its built-in Browser 
 
 # Test ChatAndCode web and desktop
 
-Use ChatAndCode's built-in Browser panel for verification. If its tools are absent or
-the panel reports unavailable, explain the blocker and stop verification.
-Do not install or switch to another automation system. For native mobile
-testing, use [test-t3-mobile](../test-t3-mobile/SKILL.md).
+Use ChatAndCode's built-in Browser panel for verification. Follow the recovery steps
+below before declaring it unavailable. Do not install or switch to another
+automation system. For native mobile testing, use
+[test-t3-mobile](../test-t3-mobile/SKILL.md).
 
 ## Start the app
 
@@ -30,14 +30,19 @@ through the real adapter and orchestration. Its models are scenarios:
 Press `Ctrl+Alt+Shift+R` for a picker (GNOME takes that key for screen
 recording), call `window.t3dev.replay("showcase")`
 with `preview_evaluate`, or run
-`node apps/server/src/bin.ts thread start --base-dir .t3 --provider devReplay --model showcase <project> "go"`.
+`node apps/server/src/bin.ts thread start --base-dir .chatandcode --provider devReplay --model showcase <project> "go"`.
 When the test needs real provider behavior, use that provider's cheapest
 model, such as Haiku for Claude or Luna for Codex.
 
 ## Use the Browser panel
 
-Call `preview_status`, then `preview_open` if the Browser panel is
-closed. Navigate to the complete startup pairing URL once with
+Call `preview_status`. If no tab can be automated, call `preview_open`, including
+when status reports `available: false` or `tabId: null`. Status can report
+unavailable simply because no tab exists yet; opening a tab needs no user action.
+Stop verification and explain the blocker only if the tools are absent or
+`preview_open` reports unavailable or fails.
+
+Navigate to the complete startup pairing URL once with
 `preview_navigate`, then use `preview_snapshot` and ChatAndCode's interaction tools.
 If the token was consumed or expired, run `node apps/server/src/bin.ts pair`
 for a fresh one. Keep using the same tab.

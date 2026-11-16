@@ -20,6 +20,8 @@ $repo = "karyashaala/chatandcode"
 $baseUrl = if ($env:CHATANDCODE_RELEASE_BASE_URL) { $env:CHATANDCODE_RELEASE_BASE_URL.TrimEnd("/") } else { "https://github.com/$repo/releases/download" }
 $t3Home = if ($env:CHATANDCODE_HOME) { $env:CHATANDCODE_HOME } else { Join-Path $HOME ".chatandcode" }
 $binDir = if ($env:CHATANDCODE_INSTALL_BIN_DIR) { $env:CHATANDCODE_INSTALL_BIN_DIR } else { Join-Path $HOME ".local\bin" }
+# Absolute, so PATH never gets a folder that changes with the working directory.
+$binDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($binDir)
 
 function Fail([string] $message) {
   Write-Error "chatandcode install: $message"
@@ -62,17 +64,35 @@ function Draw-Download([long] $bytes, [long] $total) {
     [Console]::Error.Write("`r$esc[2K" + $line.Substring(0, [Math]::Min($line.Length, $columns - 1)))
   }
 }
+# Waits 1, 2, then 4 s before retrying a 408, 429, 5xx, or network error (status 0).
+# Retry-After is ignored so a throttled GitHub cannot stall the install for minutes.
+function Wait-Retry([int] $status, [int] $attempt) {
+  if ($attempt -ge 4 -or ($status -ge 400 -and $status -lt 500 -and $status -ne 408 -and $status -ne 429)) { return $false }
+  Start-Sleep -Seconds ([Math]::Pow(2, $attempt - 1))
+  return $true
+}
+function Invoke-Retrying([scriptblock] $request) {
+  for ($attempt = 1; ; $attempt++) {
+    try { return & $request }
+    catch { if (-not (Wait-Retry ([int]$_.Exception.Response.StatusCode) $attempt)) { throw } }
+  }
+}
 function Fetch([string] $uri, [string] $destination, [switch] $progress) {
   if (-not $progress -or -not $interactive) {
     $ProgressPreference = if ($progress -and $terminal) { "Continue" } else { "SilentlyContinue" }
-    Invoke-WebRequest -Uri $uri -OutFile $destination -UseBasicParsing
+    Invoke-Retrying { Invoke-WebRequest -Uri $uri -OutFile $destination -UseBasicParsing }
     return
   }
   Add-Type -AssemblyName System.Net.Http
   $client = New-Object System.Net.Http.HttpClient
   $response = $source = $file = $null
   try {
-    $response = $client.GetAsync($uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult()
+    for ($attempt = 1; ; $attempt++) {
+      try { $response = $client.GetAsync($uri, [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead).GetAwaiter().GetResult() }
+      catch { if (Wait-Retry 0 $attempt) { continue } throw }
+      if ($response.IsSuccessStatusCode -or -not (Wait-Retry ([int]$response.StatusCode) $attempt)) { break }
+      $response.Dispose()
+    }
     $response.EnsureSuccessStatusCode() | Out-Null
     $source = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
     $file = [IO.File]::Create($destination)
@@ -122,12 +142,12 @@ if (-not $version) {
   if ($channel -eq "stable") {
     # release.yml marks only plain stable releases latest. This is a github.com
     # page, so it is not cut off by a page of newer nightlies or the API quota.
-    $release = Invoke-RestMethod -Uri "https://github.com/$repo/releases/latest" -Headers @{ "User-Agent" = "chatandcode-install"; "Accept" = "application/json" }
+    $release = Invoke-Retrying { Invoke-RestMethod -Uri "https://github.com/$repo/releases/latest" -Headers @{ "User-Agent" = "chatandcode-install"; "Accept" = "application/json" } }
     $tag = ($release | Where-Object { $_.tag_name -match $tagPattern }).tag_name
   } else {
     $tag = $null
     for ($page = 1; -not $tag -and $page -le 10; $page++) {
-      $releases = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=100&page=$page" -Headers @{ "User-Agent" = "chatandcode-install" }
+      $releases = Invoke-Retrying { Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases?per_page=100&page=$page" -Headers @{ "User-Agent" = "chatandcode-install" } }
       $tag = ($releases | Where-Object { -not $_.draft -and $_.tag_name -match $tagPattern } | Select-Object -First 1).tag_name
       if (-not $releases) { break }
     }
@@ -202,19 +222,50 @@ if ((Test-Path $marker) -and ((Get-Content $marker -Raw).Trim() -eq $version)) {
 Step "Setting up the chatandcode command..."
 New-Item -ItemType Directory -Force -Path $binDir | Out-Null
 $shim = Join-Path $binDir "chatandcode.cmd"
+# Replace only a shim that runs a version in this home; never the desktop app's or another chatandcode.
+if (Test-Path -LiteralPath $shim) {
+  $existingTarget = ""
+  # The shim is UTF-8 without a BOM; Windows PowerShell 5.1 reads files as ANSI by default.
+  # Only a shim exactly as written here counts; a user's wrapper that also runs chatandcode.exe does not.
+  $existing = [System.IO.File]::ReadAllText($shim, [System.Text.Encoding]::UTF8)
+  if ($existing -match '^@echo off\r?\n"([^"]+)" %\*\s*$') { $existingTarget = $Matches[1] }
+  # Full paths, so a target like versions\..\other cannot pass as ours.
+  $ownedPrefix = [System.IO.Path]::GetFullPath($versionsDir).TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar
+  if ($existingTarget) { $existingTarget = [System.IO.Path]::GetFullPath($existingTarget) }
+  # Exactly <version>\chatandcode.exe, never another program inside a version.
+  $owned = $existingTarget.StartsWith($ownedPrefix, [System.StringComparison]::OrdinalIgnoreCase) -and
+    ($existingTarget.Substring($ownedPrefix.Length) -match '^[^\\/]+\\chatandcode\.exe$')
+  if (-not $owned) {
+    Fail "another chatandcode is already at $shim. Remove it and run this again, or run $(Join-Path $targetDir 'chatandcode.exe') directly."
+  }
+}
 # UTF-8 without a BOM: cmd.exe reads the shim as-is, and ASCII would corrupt
 # non-ASCII characters in the user's home path.
 [System.IO.File]::WriteAllText($shim, "@echo off`r`n`"$(Join-Path $targetDir 'chatandcode.exe')`" %*", (New-Object System.Text.UTF8Encoding $false))
 # Pruning keeps what this shim points at; a background service cannot see $binDir otherwise.
 $launchers = Join-Path $t3Home "runtime\launchers"
-$shimPath = (Resolve-Path $shim).Path
+$shimPath = (Resolve-Path -LiteralPath $shim).Path
 if (-not ((Test-Path $launchers) -and ((Get-Content $launchers) -contains $shimPath))) {
   [System.IO.File]::AppendAllText($launchers, "$shimPath`r`n", (New-Object System.Text.UTF8Encoding $false))
 }
 if ($interactive) { [Console]::Error.Write("`r$esc[2K") }
 [Console]::Error.WriteLine("  ${green}Installed ChatAndCode $version$reset`n")
-if (($env:PATH -split ";") -notcontains $binDir) {
-  Write-Host "  Add $binDir to your PATH, then run ${bold}chatandcode$reset.`n"
+if ($binDir.Contains(";")) {
+  # PATH would split the folder at the `;`, so name the command in full instead.
+  Write-Host "  Run ${bold}& '$($shim.Replace("'", "''"))'$reset to get started.`n"
 } else {
-  Write-Host "  Run ${bold}chatandcode$reset to use ChatAndCode here, or ${bold}chatandcode up$reset to use it from your other devices.`n"
+  # Either side may end in a separator. Trim only here: a drive root keeps its `\` for Join-Path.
+  $added = ($env:PATH -split ";" | ForEach-Object { $_.TrimEnd('\', '/') }) -notcontains $binDir.TrimEnd('\', '/')
+  # `irm | iex` runs in the user's own session, so chatandcode works in this window right away.
+  # Last, so it never shadows another chatandcode.
+  if ($added) { $env:Path = "$env:Path;$binDir" }
+  # A chatandcode earlier on PATH runs instead, so name this one in full.
+  $first = Get-Command chatandcode -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($first -and [System.IO.Path]::GetFullPath($first.Source) -ne [System.IO.Path]::GetFullPath($shimPath)) {
+    Write-Host "  Another chatandcode at $($first.Source) runs first, so run ${bold}& '$($shim.Replace("'", "''"))'$reset to use this one.`n"
+  } elseif ($added) {
+    Write-Host "  Run ${bold}chatandcode$reset to get started. For new windows, add $binDir to your PATH.`n"
+  } else {
+    Write-Host "  Run ${bold}chatandcode$reset to use ChatAndCode here, or ${bold}chatandcode up$reset to use it from your other devices.`n"
+  }
 }

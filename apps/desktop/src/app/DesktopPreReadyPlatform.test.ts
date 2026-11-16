@@ -57,6 +57,7 @@ vi.mock("node:child_process", () => ({
   execFileSync: execFileSyncMock,
 }));
 
+import * as DesktopConfig from "./DesktopConfig.ts";
 import * as DesktopPreReadyPlatform from "./DesktopPreReadyPlatform.ts";
 
 describe("DesktopPreReadyPlatform", () => {
@@ -124,20 +125,24 @@ describe("DesktopPreReadyPlatform", () => {
     { previousEntry: 'Exec="/Applications/deleted-previous.AppImage" %U', label: "stale" },
   ])("prepares a $label Linux desktop entry before startup yields", ({ previousEntry }) => {
     vi.stubEnv("VITE_DEV_SERVER_URL", "");
-    vi.stubEnv("XDG_DATA_HOME", "/xdg");
-    vi.stubEnv("APPIMAGE", "/Applications/current.AppImage");
     getSwitchValueMock.mockReturnValue("");
     let desktopName = "chatandcode.desktop";
     let desktopEntry = previousEntry;
     let iconInstalled = false;
-    copyFileSyncMock.mockImplementation((_source: string, destination: string) => {
-      iconInstalled = destination === "/xdg/icons/ca.chatcode.chatandcode.desktop.png";
+    const iconSource = "/tmp/.mount_T3/resources/app.asar/apps/desktop/prod-resources/icon.png";
+    const iconPath = "/xdg/icons/ca.chatcode.chatandcode.desktop.png";
+    const iconBytes = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
+    readFileSyncMock.mockImplementation((path: string) => {
+      if (path === iconSource) return iconBytes;
+      return "{}";
     });
     setDesktopNameMock.mockImplementation((name: string) => {
       desktopName = name;
     });
-    writeFileSyncMock.mockImplementation((path: string, contents: string) => {
-      if (path === "/xdg/applications/ca.chatcode.chatandcode.desktop") desktopEntry = contents;
+    writeFileSyncMock.mockImplementation((path: string, contents: string | Buffer) => {
+      if (path === "/xdg/applications/ca.chatcode.chatandcode.desktop")
+        desktopEntry = String(contents);
+      if (path === iconPath) iconInstalled = Buffer.compare(Buffer.from(contents), iconBytes) === 0;
     });
 
     return Effect.scoped(
@@ -150,6 +155,12 @@ describe("DesktopPreReadyPlatform", () => {
         yield* Layer.build(
           DesktopPreReadyPlatform.layer.pipe(
             Layer.provide(Layer.succeed(HostProcess.Platform, "linux")),
+            Layer.provide(
+              DesktopConfig.layerTest({
+                XDG_DATA_HOME: "/xdg",
+                APPIMAGE: "/Applications/current.AppImage",
+              }),
+            ),
           ),
         );
         const identity = yield* Effect.promise(() => portalIdentity);
@@ -161,16 +172,18 @@ describe("DesktopPreReadyPlatform", () => {
           identity.desktopEntry ?? "",
           "Icon=/xdg/icons/ca.chatcode.chatandcode.desktop.png",
         );
-        assert.isTrue(identity.iconInstalled);
+        assert.equal(
+          copyFileSyncMock.mock.calls.length,
+          0,
+          "icon must not be copied out of the app bundle",
+        );
+        assert.isTrue(identity.iconInstalled, "icon must be written from the bundled bytes");
       }),
     ).pipe(Effect.ensuring(Effect.sync(() => vi.unstubAllEnvs())));
   });
 
   it.effect("points the early portal entry at a configured distribution launcher", () => {
     vi.stubEnv("VITE_DEV_SERVER_URL", "");
-    vi.stubEnv("XDG_DATA_HOME", "/xdg");
-    vi.stubEnv("APPIMAGE", "/Applications/current.AppImage");
-    vi.stubEnv("CHATANDCODE_DESKTOP_LAUNCHER_PATH", " /opt/ChatAndCode/chatandcode ");
     getSwitchValueMock.mockReturnValue("");
 
     return Effect.scoped(
@@ -178,6 +191,13 @@ describe("DesktopPreReadyPlatform", () => {
         yield* Layer.build(
           DesktopPreReadyPlatform.layer.pipe(
             Layer.provide(Layer.succeed(HostProcess.Platform, "linux")),
+            Layer.provide(
+              DesktopConfig.layerTest({
+                XDG_DATA_HOME: "/xdg",
+                APPIMAGE: "/Applications/current.AppImage",
+                CHATANDCODE_DESKTOP_LAUNCHER_PATH: " /opt/ChatAndCode/chatandcode ",
+              }),
+            ),
           ),
         );
         const entry = writeFileSyncMock.mock.calls.find(

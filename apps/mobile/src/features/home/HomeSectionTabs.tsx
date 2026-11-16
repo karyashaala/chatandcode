@@ -14,7 +14,7 @@ import { useNavigationThreadShells, useProjects, useServerConfigs } from "../../
 import { threadListEnvironmentsAtom } from "../../state/presentation";
 import { useSavedRemoteConnections } from "../../state/use-remote-environment-registry";
 import { resolveHomeSectionSummary, type HomeSectionSummary } from "../threads/threadListV2";
-import { useSelectWorkspaceDetail } from "../workspace/useSelectWorkspaceDetail";
+import { useSelectWorkspaceDetail } from "../layout/workspace/useSelectWorkspaceDetail";
 import { useHomeListOptions, useHomeListSection, type HomeListSection } from "./home-list-options";
 
 /**

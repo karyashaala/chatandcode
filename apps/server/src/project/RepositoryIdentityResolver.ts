@@ -6,7 +6,9 @@ import * as Data from "effect/Data";
 import * as Duration from "effect/Duration";
 import * as Effect from "effect/Effect";
 import * as Exit from "effect/Exit";
+import * as FileSystem from "effect/FileSystem";
 import * as Layer from "effect/Layer";
+import * as Path from "effect/Path";
 
 import * as ProcessRunner from "../processRunner.ts";
 import { sourceControlDefinitions } from "../sourceControl/sourceControlDefinitions.ts";
@@ -68,10 +70,34 @@ function parseRemoteFetchUrls(stdout: string): Map<string, string> {
   return remotes;
 }
 
+/**
+ * The remote `gh repo set-default` marked as the base repository (`remote.<name>.gh-resolved
+ * base`). Several marks have no defined winner, and a mark naming a repository that is not a
+ * remote has no remote to follow, so both count as no choice.
+ */
+function parseGitHubDefaultRemoteName(stdout: string): string | null {
+  const marks = stdout
+    .split("\n")
+    .map((line) => /^remote\.(.+)\.gh-resolved\s+(\S+)$/u.exec(line.trim()))
+    .filter((match) => match !== null);
+  const [mark] = marks;
+  return marks.length === 1 && mark?.[2] === "base" ? (mark[1] ?? null) : null;
+}
+
+/**
+ * A fork follows the repository it tracks (`upstream`), so pull request features land where
+ * its changes are proposed. A remote marked by `gh repo set-default` wins over that: it is
+ * where the user said their pull requests go, such as a fork that never proposes upstream.
+ */
 function pickPrimaryRemote(
   remotes: ReadonlyMap<string, string>,
+  gitHubDefaultRemoteName: string | null,
 ): { readonly remoteName: string; readonly remoteUrl: string } | null {
-  for (const preferredRemoteName of ["upstream", "origin"] as const) {
+  const preferredRemoteNames =
+    gitHubDefaultRemoteName === null
+      ? ["upstream", "origin"]
+      : [gitHubDefaultRemoteName, "upstream", "origin"];
+  for (const preferredRemoteName of preferredRemoteNames) {
     const remoteUrl = remotes.get(preferredRemoteName);
     if (remoteUrl) {
       return { remoteName: preferredRemoteName, remoteUrl };
@@ -138,7 +164,17 @@ class RepositoryIdentityCacheKey extends Data.Class<{
 const resolveRepositoryIdentityCacheKey = Effect.fn("RepositoryIdentityResolver.resolveCacheKey")(
   function* (cwd: string) {
     const processRunner = yield* ProcessRunner.ProcessRunner;
+    const fileSystem = yield* FileSystem.FileSystem;
+    const path = yield* Path.Path;
     const env = explicitBareRepositoryEnv(process.env, yield* HostProcess.Platform);
+
+    // `git -C` cannot enter a missing folder or a file, so every probe below would fail.
+    const isFolder = yield* fileSystem.stat(cwd).pipe(
+      Effect.map((info) => info.type === "Directory"),
+      Effect.catchReason("PlatformError", "NotFound", () => Effect.succeed(false)),
+      Effect.orElseSucceed(() => true),
+    );
+    if (!isFolder) return null;
 
     // git is always a real executable; cmd shell mode would split spaced paths on re-tokenization.
     const topLevelResult = yield* processRunner
@@ -160,7 +196,25 @@ const resolveRepositoryIdentityCacheKey = Effect.fn("RepositoryIdentityResolver.
     }
 
     // Explicit Git directories preserve safe.bareRepository=explicit for both layouts.
-    for (const gitDir of [".", ".git"]) {
+    for (const [gitDir, entry] of [
+      [".", "HEAD"],
+      [".git", ".git"],
+    ] as const) {
+      // An explicit --git-dir fails unless the folder has this entry; a symlink counts even
+      // when its target is missing, as git reads a symlinked HEAD's target text.
+      const target = path.join(cwd, entry);
+      const hasEntry = yield* fileSystem.exists(target).pipe(
+        Effect.flatMap((exists) =>
+          exists
+            ? Effect.succeed(true)
+            : fileSystem.readLink(target).pipe(
+                Effect.as(true),
+                Effect.orElseSucceed(() => false),
+              ),
+        ),
+        Effect.orElseSucceed(() => true),
+      );
+      if (!hasEntry) continue;
       const bareResult = yield* processRunner
         .run({
           command: "git",
@@ -197,11 +251,13 @@ const resolveRepositoryIdentityFromCacheKey = Effect.fn(
   cacheKey: RepositoryIdentityCacheKey,
 ): Effect.fn.Return<RepositoryIdentity | null, never, ProcessRunner.ProcessRunner> {
   const processRunner = yield* ProcessRunner.ProcessRunner;
+  const gitArgs = ["-C", cacheKey.rootPath, ...(cacheKey.isBare ? ["--git-dir=."] : [])];
+  const env = explicitBareRepositoryEnv(process.env, yield* HostProcess.Platform);
   const remoteResult = yield* processRunner
     .run({
       command: "git",
-      args: ["-C", cacheKey.rootPath, ...(cacheKey.isBare ? ["--git-dir=."] : []), "remote", "-v"],
-      env: explicitBareRepositoryEnv(process.env, yield* HostProcess.Platform),
+      args: [...gitArgs, "remote", "-v"],
+      env,
       timeoutBehavior: "timedOutResult",
     })
     .pipe(Effect.option);
@@ -210,7 +266,23 @@ const resolveRepositoryIdentityFromCacheKey = Effect.fn(
   }
 
   const remotes = parseRemoteFetchUrls(remoteResult.value.stdout);
-  const remote = pickPrimaryRemote(remotes);
+  // Only a choice between remotes can be decided by gh's mark. Exit 1 means no remote has one.
+  const defaultRemoteResult =
+    remotes.size > 1
+      ? yield* processRunner
+          .run({
+            command: "git",
+            args: [...gitArgs, "config", "--get-regexp", "^remote\\..*\\.gh-resolved$"],
+            env,
+            timeoutBehavior: "timedOutResult",
+          })
+          .pipe(Effect.option)
+      : null;
+  const gitHubDefaultRemoteName =
+    defaultRemoteResult?._tag === "Some" && defaultRemoteResult.value.code === 0
+      ? parseGitHubDefaultRemoteName(defaultRemoteResult.value.stdout)
+      : null;
+  const remote = pickPrimaryRemote(remotes, gitHubDefaultRemoteName);
   return remote
     ? buildRepositoryIdentity({
         ...remote,
@@ -224,6 +296,8 @@ export const make = Effect.fn("RepositoryIdentityResolver.make")(function* (
   options: RepositoryIdentityResolverOptions = {},
 ) {
   const processRunner = yield* ProcessRunner.ProcessRunner;
+  const fileSystem = yield* FileSystem.FileSystem;
+  const path = yield* Path.Path;
   const cacheCapacity = options.cacheCapacity ?? DEFAULT_REPOSITORY_IDENTITY_CACHE_CAPACITY;
   const refine = options.refine ?? Effect.succeed;
   const timeToLive = (exit: Exit.Exit<unknown>) =>
@@ -237,6 +311,8 @@ export const make = Effect.fn("RepositoryIdentityResolver.make")(function* (
     (cwd) =>
       resolveRepositoryIdentityCacheKey(cwd).pipe(
         Effect.provideService(ProcessRunner.ProcessRunner, processRunner),
+        Effect.provideService(FileSystem.FileSystem, fileSystem),
+        Effect.provideService(Path.Path, path),
       ),
     { capacity: cacheCapacity, timeToLive },
   );

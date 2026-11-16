@@ -1,6 +1,7 @@
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, it } from "@effect/vitest";
 import {
+  type ManagedPolicySummary,
   type ModelSelection,
   type OrchestrationV2AppThread,
   ProjectId,
@@ -15,6 +16,8 @@ import * as Layer from "effect/Layer";
 import * as Stream from "effect/Stream";
 
 import type { ProviderInstance } from "@cctools/provider-core/server/driver";
+import { acpPermissionDisposition } from "@cctools/provider-acp/server/clientPolicy";
+import * as ServerSettings from "../serverSettings.ts";
 import * as ProviderInstanceRegistry from "../provider/ProviderInstanceRegistry.ts";
 import * as ServerConfig from "../config.ts";
 import * as ProjectStore from "./ProjectStore.ts";
@@ -64,8 +67,10 @@ function makeThread(input: {
 }
 
 const grokInstanceId = ProviderInstanceId.make("grok");
+const antigravityInstanceId = ProviderInstanceId.make("antigravity");
 const supportedRuntimeModesByInstance = new Map<ProviderInstanceId, ReadonlyArray<RuntimeMode>>([
   [grokInstanceId, ["approval-required", "auto", "full-access"]],
+  [antigravityInstanceId, ["approval-required", "auto-accept-edits", "full-access"]],
 ]);
 const providerInstanceFor = (instanceId: ProviderInstanceId) =>
   ({
@@ -76,48 +81,52 @@ const providerInstanceFor = (instanceId: ProviderInstanceId) =>
     },
   }) as ProviderInstance;
 
-const layerTest = RuntimePolicy.layerFromProjectStore.pipe(
-  Layer.provide(
-    Layer.effect(
-      ServerConfig.ServerConfig,
-      Effect.map(ServerConfig.ServerConfig, (config) => ({ ...config, stateDir: "/test-state" })),
-    ).pipe(
-      Layer.provide(ServerConfig.layerTest(process.cwd(), { prefix: "rf06-test-" })),
-      Layer.provideMerge(NodeServices.layer),
+const layerWithPolicy = (policy?: ManagedPolicySummary) =>
+  RuntimePolicy.layerFromProjectStore.pipe(
+    Layer.provide(
+      Layer.effect(
+        ServerConfig.ServerConfig,
+        Effect.map(ServerConfig.ServerConfig, (config) => ({ ...config, stateDir: "/test-state" })),
+      ).pipe(
+        Layer.provide(ServerConfig.layerTest(process.cwd(), { prefix: "rf06-test-" })),
+        Layer.provideMerge(NodeServices.layer),
+      ),
     ),
-  ),
-  Layer.provide(
-    Layer.succeed(ProviderInstanceRegistry.ProviderInstanceRegistry, {
-      getInstance: (instanceId) => Effect.succeed(providerInstanceFor(instanceId)),
-      listInstances: Effect.succeed([]),
-      listUnavailable: Effect.succeed([]),
-      streamChanges: Stream.empty,
-      subscribeChanges: Effect.never,
-    }),
-  ),
-  Layer.provide(
-    Layer.mock(ProjectStore.ProjectStoreV2)({
-      get: (id) =>
-        Effect.succeedSome({
-          projectId,
-          title: "Project",
-          workspaceRoot:
-            id === ProjectId.make("project:chats") ? "/test-state/chats" : "/project-root",
-          defaultModelSelection: null,
-          defaultThreadEnvMode: null,
-          autoPull: false,
-          faviconPath: null,
-          projectIcon: null,
-          scripts: [],
-          pinnedAt: null,
-          archivedAt: null,
-          createdAt: "2026-06-21T00:00:00.000Z",
-          updatedAt: "2026-06-21T00:00:00.000Z",
-          deletedAt: null,
-        }),
-    }),
-  ),
-);
+    Layer.provide(ServerSettings.layerTest({}, policy)),
+    Layer.provide(
+      Layer.succeed(ProviderInstanceRegistry.ProviderInstanceRegistry, {
+        getInstance: (instanceId) => Effect.succeed(providerInstanceFor(instanceId)),
+        listInstances: Effect.succeed([]),
+        listUnavailable: Effect.succeed([]),
+        streamChanges: Stream.empty,
+        subscribeChanges: Effect.never,
+      }),
+    ),
+    Layer.provide(
+      Layer.mock(ProjectStore.ProjectStoreV2)({
+        get: (id) =>
+          Effect.succeedSome({
+            projectId,
+            title: "Project",
+            workspaceRoot:
+              id === ProjectId.make("project:chats") ? "/test-state/chats" : "/project-root",
+            defaultModelSelection: null,
+            defaultThreadEnvMode: null,
+            autoPull: false,
+            faviconPath: null,
+            projectIcon: null,
+            scripts: [],
+            pinnedAt: null,
+            archivedAt: null,
+            createdAt: "2026-06-21T00:00:00.000Z",
+            updatedAt: "2026-06-21T00:00:00.000Z",
+            deletedAt: null,
+          }),
+      }),
+    ),
+  );
+
+const layerTest = layerWithPolicy();
 
 it.layer(layerTest)("RuntimePolicyV2", (it) => {
   it.effect("classifies a Chats project thread as chat", () =>
@@ -164,6 +173,28 @@ it.layer(layerTest)("RuntimePolicyV2", (it) => {
     }),
   );
 
+  it.effect("asks for Antigravity command approval when a stored Auto thread falls back", () =>
+    Effect.gen(function* () {
+      const policy = yield* RuntimePolicy.RuntimePolicyV2;
+      const now = yield* DateTime.now;
+      const resolve = (runtimeMode: RuntimeMode) =>
+        policy.resolve({
+          thread: makeThread({ now, worktreePath: null, runtimeMode }),
+          modelSelection: { instanceId: antigravityInstanceId, model: "test-model" },
+        });
+      const request = {
+        sessionId: "session-1",
+        toolCall: { toolCallId: "command-1", title: "Run command", kind: "execute" as const },
+        options: [{ optionId: "allow", name: "Allow", kind: "allow_once" as const }],
+      };
+      const auto = yield* resolve("auto");
+      assert.equal(auto.runtimeMode, "approval-required");
+      assert.equal(acpPermissionDisposition(auto, request), "ask");
+      assert.equal(acpPermissionDisposition(yield* resolve("auto-accept-edits"), request), "ask");
+      assert.equal(acpPermissionDisposition(yield* resolve("full-access"), request), "allow");
+    }),
+  );
+
   it.effect("runs a mode the provider does not offer in Supervised", () =>
     Effect.gen(function* () {
       const policy = yield* RuntimePolicy.RuntimePolicyV2;
@@ -180,6 +211,36 @@ it.layer(layerTest)("RuntimePolicyV2", (it) => {
       assert.equal(yield* modeFor(grokInstanceId, "auto"), "auto");
       assert.equal(yield* modeFor(grokInstanceId, "full-access"), "full-access");
       assert.equal(yield* modeFor(providerInstanceId, "auto-accept-edits"), "auto-accept-edits");
+    }),
+  );
+});
+
+it.layer(
+  layerWithPolicy({
+    organization: "Example Corp",
+    lockedSettings: [],
+    limits: { maxRuntimeMode: "auto-accept-edits" },
+  }),
+)("RuntimePolicyV2 under a runtime mode ceiling", (it) => {
+  it.effect("refuses to start a turn above the ceiling, such as one resumed after a restart", () =>
+    Effect.gen(function* () {
+      const policy = yield* RuntimePolicy.RuntimePolicyV2;
+      const now = yield* DateTime.now;
+      const resolve = (runtimeMode: RuntimeMode) =>
+        policy.resolve({
+          thread: makeThread({ now, worktreePath: "/work", runtimeMode }),
+          modelSelection,
+        });
+
+      const refused = yield* resolve("full-access").pipe(Effect.flip);
+      assert.equal(refused._tag, "RuntimePolicyAboveCeilingError");
+      assert.equal(
+        refused.message,
+        "Example Corp limits threads to Auto-accept edits. Switch this thread's mode to continue.",
+      );
+      const allowed = yield* resolve("auto-accept-edits");
+      assert.equal(allowed.runtimeMode, "auto-accept-edits");
+      assert.equal(allowed.maxRuntimeMode, "auto-accept-edits");
     }),
   );
 });

@@ -14,7 +14,9 @@ not. A repository identity can correlate clones across environments, but never
 routes work between them. A project and its threads belong to one environment;
 an agent reaches another environment's threads only through a peer link.
 The canonical key follows the `upstream` remote when one exists, so pull request
-features target the repository a fork tracks. A fork also reports its own
+features target the repository a fork tracks. A remote marked by
+`gh repo set-default` wins over `upstream`, so a fork that takes its own pull
+requests lists and links them where `gh` opens them. A fork also reports its own
 `origin`, and clients group and label by that, so a fork never collapses into a
 checkout of its upstream.
 
@@ -94,9 +96,15 @@ Unlinking on the linking side only forgets the token.
   `T3-Mode-Limit`, which the receiving `/mcp` only ever narrows the client's
   approved access with. A plan-mode agent therefore cannot start full-access
   work through a full-access link.
-- **The token goes only to an address that proves it is the linked
-  environment**: its descriptor must report the linked environment id. A LAN
-  address that now belongs to another machine never receives it.
+- **A descriptor's environment id filters addresses; it does not prove
+  identity.** The token goes only to an address that reports the linked id, so
+  a LAN address that now reports another machine's never receives it. Anything can
+  report any id, though, so only addresses from the user's client count as a
+  machine's, and never a loopback one, which names whichever machine opens
+  it. An address an agent gives is recorded alone, and
+  [`linkRequestTarget`](../../packages/client-runtime/src/linkRequest.ts) names
+  a machine for it only when the client already reaches exactly one machine
+  there. An address alone never moves an unexpired link to another address.
 - **All callers on one side share the link's single session on the other**,
   so idempotency keys are hashed with the caller's namespace before they
   leave. Without that, two agents reusing a key would collide on the far side.

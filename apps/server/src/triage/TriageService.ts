@@ -23,7 +23,8 @@ const CHATANDCODE_REPOSITORY_URL = "https://github.com/karyashaala/chatandcode";
 const GIT_ENV = {
   GIT_TERMINAL_PROMPT: "0",
   GIT_ASKPASS: "",
-  LC_ALL: "C",
+  // English messages without overriding LC_CTYPE, which a global post-checkout hook inherits.
+  LANGUAGE: "C",
 } satisfies NodeJS.ProcessEnv;
 
 /** Starts in-app triage sessions: the same files `chatandcode triage` writes, plus a source clone. */

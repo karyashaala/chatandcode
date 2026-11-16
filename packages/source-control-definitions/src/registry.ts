@@ -1,6 +1,7 @@
 import * as AzureDevOps from "@cctools/source-control-azure-devops/shared/definition";
 import * as Bitbucket from "@cctools/source-control-bitbucket/shared/definition";
 import { makeSourceControlDefinitionRegistry } from "@cctools/source-control-core/shared/definition";
+import * as CursorOrigin from "@cctools/source-control-cursor-origin/shared/definition";
 import * as Forgejo from "@cctools/source-control-forgejo/shared/definition";
 import * as GitCafe from "@cctools/source-control-gitcafe/shared/definition";
 import * as GitHub from "@cctools/source-control-github/shared/definition";
@@ -10,12 +11,14 @@ export { canonicalizePullRequestUrl as canonicalizeGitCafePullRequestUrl } from 
 
 /**
  * GitHub comes first to preserve the client default for repositories with an unknown host.
- * GitCafe claims URLs first because GitHub and Forgejo accept the same routes on any hostname.
+ * GitCafe and Cursor Origin claim URLs first because GitHub and Forgejo accept the same routes on
+ * any hostname.
  * Remote recognition needs its own order because host labels can overlap (`gitea.github.example`).
  */
 export const builtInSourceControlDefinitions = makeSourceControlDefinitionRegistry(
   [
     GitHub.definition,
+    CursorOrigin.definition,
     GitLab.definition,
     GitCafe.definition,
     Forgejo.definition,
@@ -23,9 +26,14 @@ export const builtInSourceControlDefinitions = makeSourceControlDefinitionRegist
     AzureDevOps.definition,
   ],
   {
-    claimChangeRequestUrlsFirst: [GitCafe.definition.kind, AzureDevOps.definition.kind],
+    claimChangeRequestUrlsFirst: [
+      GitCafe.definition.kind,
+      CursorOrigin.definition.kind,
+      AzureDevOps.definition.kind,
+    ],
     recognizeRemotesIn: [
       GitCafe.definition.kind,
+      CursorOrigin.definition.kind,
       Forgejo.definition.kind,
       GitHub.definition.kind,
       GitLab.definition.kind,
