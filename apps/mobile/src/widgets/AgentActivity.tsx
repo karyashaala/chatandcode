@@ -1,4 +1,3 @@
-import { stageScheme } from "@cctools/shared/brand";
 import { HStack, Image, Spacer, Text, VStack, ZStack } from "@expo/ui/swift-ui";
 import type { ComponentProps } from "react";
 import {
@@ -150,10 +149,11 @@ function AgentActivity(
   const summary = attentionSuffix || activeLabel;
 
   // Widget taps target the containing app, so its production scheme is safe in every build.
+  // Keep the scheme literal: the widget runtime evaluates this function's source without its imports.
   const deepLinkRow = attentionRow ?? row0;
   const deepLink =
     deepLinkRow && deepLinkRow.deepLink.startsWith("/") && !deepLinkRow.deepLink.startsWith("//")
-      ? `${stageScheme("production")}://${deepLinkRow.deepLink.slice(1)}`
+      ? `chatandcode://${deepLinkRow.deepLink.slice(1)}`
       : null;
   const linkModifiers = deepLink ? [widgetURL(deepLink)] : [];
 
