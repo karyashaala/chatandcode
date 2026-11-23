@@ -43,6 +43,7 @@ export function SettingsLabsRouteScreen() {
         contentContainerClassName="gap-6 px-5 pt-4"
         contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 18) + 18 }}
       >
+        <PinnedSectionBeta />
         <MachineBetaSection
           title="Linked environments"
           icon="link"
@@ -59,6 +60,30 @@ export function SettingsLabsRouteScreen() {
         />
       </ScrollView>
     </SettingsScreen>
+  );
+}
+
+function PinnedSectionBeta() {
+  const savePreferences = useAtomSet(updateMobilePreferencesAtom);
+  const preferences = useAtomValue(mobilePreferencesAtom);
+  const enabled =
+    AsyncResult.isSuccess(preferences) && preferences.value.pinnedSectionEnabled === true;
+
+  return (
+    <View className="gap-3">
+      <SettingsSection title="Beta: Pinned section">
+        <SettingsSwitchRow
+          icon="pin"
+          label="This device"
+          value={enabled}
+          onValueChange={(value) => savePreferences({ pinnedSectionEnabled: value })}
+        />
+      </SettingsSection>
+      <Text className="px-2 text-sm text-foreground-muted">
+        Show Pinned and In play headers at the top of your threads. They fold like Working, but
+        start open.
+      </Text>
+    </View>
   );
 }
 
@@ -199,8 +224,6 @@ export function WorkingSectionSettings() {
   const preferences = useAtomValue(mobilePreferencesAtom);
   const workingShelfEnabled =
     AsyncResult.isSuccess(preferences) && preferences.value.workingShelfEnabled !== false;
-  const pinnedSectionEnabled =
-    AsyncResult.isSuccess(preferences) && preferences.value.pinnedSectionEnabled === true;
 
   return (
     <View className="gap-3">
@@ -211,21 +234,11 @@ export function WorkingSectionSettings() {
           value={workingShelfEnabled}
           onValueChange={(value) => savePreferences({ workingShelfEnabled: value })}
         />
-        <SettingsSwitchRow
-          icon="pin"
-          label="Pinned section"
-          value={pinnedSectionEnabled}
-          onValueChange={(value) => savePreferences({ pinnedSectionEnabled: value })}
-        />
       </SettingsSection>
       <Text className="px-2 text-sm text-foreground-muted">
         Fold working and monitoring threads into a Working section. They return to the top of the
         list when they need you. While this is on, active threads are ordered by time and cannot be
         moved.
-      </Text>
-      <Text className="px-2 text-sm text-foreground-muted">
-        Beta: show Pinned and In play headers at the top of your threads. They fold like Working,
-        but start open.
       </Text>
     </View>
   );

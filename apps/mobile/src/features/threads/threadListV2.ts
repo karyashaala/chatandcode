@@ -120,12 +120,16 @@ export function resolveThreadListV2SwipeActions(input: {
   readonly snoozeSupported: boolean;
   readonly snoozable: boolean;
   readonly snoozed?: boolean;
+  readonly pinningSupported: boolean;
+  readonly pinned: boolean;
 }): {
   readonly primary: Exclude<ThreadListV2SwipeAction, "snooze">;
   readonly secondary: "snooze" | null;
+  /** The right swipe. Like the row menu, a snoozed row offers no pin. */
+  readonly leading: "pin" | "unpin" | null;
 } {
   if (input.snoozed === true) {
-    return { primary: "unsnooze", secondary: null };
+    return { primary: "unsnooze", secondary: null, leading: null };
   }
   const primary = input.settlementSupported
     ? input.variant === "slim"
@@ -135,6 +139,7 @@ export function resolveThreadListV2SwipeActions(input: {
   return {
     primary,
     secondary: input.snoozeSupported && input.snoozable ? "snooze" : null,
+    leading: input.pinningSupported ? (input.pinned ? "unpin" : "pin") : null,
   };
 }
 

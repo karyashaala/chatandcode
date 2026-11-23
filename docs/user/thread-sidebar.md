@@ -72,7 +72,8 @@ chats; update an older server to get it.
 
 ## Pin and reorder threads
 
-Pin a thread from its menu to keep it above your active work.
+Pin a thread from its menu to keep it above your active work. On mobile, you can also
+swipe a thread right to pin it, or swipe a pinned thread right to unpin it.
 
 On web and desktop, unpinning, settling, snoozing, and archiving a thread each show
 a notification with **Undo** for five seconds. Undo restores the thread's previous
@@ -170,11 +171,11 @@ inside collapsed sections count too. Change the shortcut in **Settings → Keybi
 
 ### Pinned section (beta)
 
-Turn on **Settings → Labs → Pinned section** on web and desktop, or **Settings → General → Pinned
-section** on iOS and Android, to show a **Pinned** header above your pinned threads and an **In
-play** header above the rest of your active threads. Both fold like **Working**, but start open; a
-folded section still lists the thread you have open. The **In play** header appears only while you
-have pinned threads, and not while threads are grouped by project.
+Turn on **Settings → Labs → Pinned section** to show a **Pinned** header above your pinned threads
+and an **In play** header above the rest of your active threads. The switch is saved separately on
+each device. Both fold like **Working**, but start open; a folded section still lists the thread
+you have open. The **In play** header appears only while you have pinned threads, and not while
+threads are grouped by project.
 
 On web and desktop, pinned rows have no Settle button on hover, because settling a thread also
 removes its pin. Settle a pinned thread from its menu instead.

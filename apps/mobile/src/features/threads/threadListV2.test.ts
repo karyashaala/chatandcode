@@ -228,6 +228,8 @@ describe("resolveThreadListV2SwipeActions", () => {
         settlementSupported: true,
         snoozeSupported: true,
         snoozable: canSnooze(thread, { now: NOW }),
+        pinningSupported: true,
+        pinned: false,
       }).secondary,
     ).toBe("snooze");
 
@@ -241,6 +243,26 @@ describe("resolveThreadListV2SwipeActions", () => {
     });
     expect(layout.snoozedCount).toBe(1);
   });
+
+  it.each([
+    { pinningSupported: true, pinned: false, snoozed: false, leading: "pin" },
+    { pinningSupported: true, pinned: true, snoozed: false, leading: "unpin" },
+    { pinningSupported: true, pinned: false, snoozed: true, leading: null },
+    { pinningSupported: false, pinned: false, snoozed: false, leading: null },
+  ] as const)(
+    "swiping right offers $leading when pinning is supported: $pinningSupported, pinned: $pinned, snoozed: $snoozed",
+    ({ leading, ...row }) => {
+      expect(
+        resolveThreadListV2SwipeActions({
+          variant: "card",
+          settlementSupported: true,
+          snoozeSupported: true,
+          snoozable: true,
+          ...row,
+        }).leading,
+      ).toBe(leading);
+    },
+  );
 });
 
 describe("search lists ranked matches", () => {

@@ -893,6 +893,8 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
     snoozeSupported: props.snoozeSupported,
     snoozable: canSnooze(thread, { now: snoozeGateNow }),
     snoozed: snoozedRow,
+    pinningSupported: props.pinningSupported,
+    pinned: thread.pinnedAt != null,
   });
   const snoozePresets = resolveThreadListV2SnoozePresets({
     secondary: swipeActions.secondary,
@@ -1197,11 +1199,34 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
         : null,
     [handleMenuAction, snoozePresetActions, swipeActions.secondary, thread.title],
   );
+  const leadingAction = useMemo(
+    () =>
+      swipeActions.leading === null
+        ? null
+        : swipeActions.leading === "unpin"
+          ? {
+              accessibilityLabel: `Unpin ${thread.title}`,
+              icon: "pin.slash" as const,
+              label: "Unpin",
+              onPress: handleUnpin,
+              tone: "amber" as const,
+            }
+          : {
+              accessibilityLabel: `Pin ${thread.title}`,
+              icon: "pin" as const,
+              label: "Pin",
+              onPress: handlePin,
+              tone: "amber" as const,
+            },
+    [handlePin, handleUnpin, swipeActions.leading, thread.title],
+  );
+  const leadingSwipeHint =
+    leadingAction === null ? "" : ` Swipe right to ${leadingAction.label.toLowerCase()}.`;
   const swipeAccessibilityHint = !canOperateThread
     ? "Opens the thread"
     : secondaryAction === null
-      ? `Opens the thread. Swipe left to ${primaryAction.label.toLowerCase()}.`
-      : `Opens the thread. Swipe left for ${primaryAction.label.toLowerCase()} and snooze actions.`;
+      ? `Opens the thread. Swipe left to ${primaryAction.label.toLowerCase()}.${leadingSwipeHint}`
+      : `Opens the thread. Swipe left for ${primaryAction.label.toLowerCase()} and snooze actions.${leadingSwipeHint}`;
 
   const titleTextInset = props.project ? projectIconSize + 8 : 0;
   const cardContent = (
@@ -1677,6 +1702,7 @@ export const ThreadListV2Row = memo(function ThreadListV2Row(props: {
         enableTrackpadSwipe
         fullSwipeAction="primary"
         fullSwipeWidth={props.fullSwipeWidth ?? windowWidth - 32}
+        leadingAction={leadingAction}
         onDelete={handleDelete}
         onSwipeableClose={props.onSwipeableClose}
         onSwipeableWillOpen={props.onSwipeableWillOpen}

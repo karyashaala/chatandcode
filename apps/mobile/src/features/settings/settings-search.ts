@@ -107,6 +107,7 @@ const SETTINGS_SEARCH_TERMS = {
   ],
   SettingsLabs: [
     "beta",
+    "pinned section",
     "linked environments",
     "link machine",
     "fast worktree checkout",
